@@ -13,17 +13,17 @@
  */
 package com.facebook.presto.recordservice;
 
-import com.facebook.presto.spi.Plugin;
+import com.facebook.presto.spi.ConnectorSession;
+import com.facebook.presto.spi.ConnectorSplitSource;
+import com.facebook.presto.spi.ConnectorTableLayoutHandle;
+import com.facebook.presto.spi.connector.ConnectorSplitManager;
+import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
 
-import java.util.List;
-
-/**
- * Presto plugin to use RecordService as a data source.
- */
-public class RecordServicePlugin implements Plugin
+public class RecordServiceSplitManager implements ConnectorSplitManager
 {
   @Override
-  public <T> List<T> getServices(Class<T> type)
+  public ConnectorSplitSource getSplits(ConnectorTransactionHandle handle,
+      ConnectorSession session, ConnectorTableLayoutHandle layout)
   {
     return null;
   }
