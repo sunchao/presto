@@ -13,5 +13,21 @@
  */
 package com.facebook.presto.recordservice;
 
-public class RecordServiceModule {
+import com.google.inject.Binder;
+import com.google.inject.Module;
+import com.google.inject.Scopes;
+
+import static io.airlift.configuration.ConfigBinder.configBinder;
+
+public class RecordServiceModule implements Module
+{
+  @Override
+  public void configure(Binder binder) {
+    binder.bind(RecordServiceConnector.class).in(Scopes.SINGLETON);
+
+    binder.bind(RecordServiceMetadata.class).in(Scopes.SINGLETON);
+    binder.bind(RecordServiceSplitManager.class).in(Scopes.SINGLETON);
+    binder.bind(RecordServiceRecordSetProvider.class).in(Scopes.SINGLETON);
+    configBinder(binder).bindConfig(RecordServiceConnectorConfig.class);
+  }
 }

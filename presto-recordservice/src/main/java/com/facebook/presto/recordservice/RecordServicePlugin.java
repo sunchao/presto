@@ -13,18 +13,52 @@
  */
 package com.facebook.presto.recordservice;
 
+import com.facebook.presto.spi.NodeManager;
 import com.facebook.presto.spi.Plugin;
+import com.facebook.presto.spi.connector.ConnectorFactory;
+import com.facebook.presto.spi.type.TypeManager;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
+import com.google.inject.Inject;
 
 import java.util.List;
+import java.util.Map;
+
+import static java.util.Objects.requireNonNull;
 
 /**
  * Presto plugin to use RecordService as a data source.
  */
 public class RecordServicePlugin implements Plugin
 {
+  private TypeManager typeManager;
+  private NodeManager nodeManager;
+  private Map<String, String> optionalConfig = ImmutableMap.of();
+
+  @Override
+  public synchronized void setOptionalConfig(Map<String, String> optionalConfig)
+  {
+    this.optionalConfig = ImmutableMap.copyOf(requireNonNull(optionalConfig, "optionalConfig is null"));
+  }
+
+  @Inject
+  public synchronized void setTypeManager(TypeManager typeManager)
+  {
+    this.typeManager = requireNonNull(typeManager, "typeManager is null");
+  }
+
+  @Inject
+  public synchronized void setNodeManager(NodeManager nodeManager)
+  {
+    this.nodeManager = requireNonNull(nodeManager, "node is null");
+  }
+
   @Override
   public <T> List<T> getServices(Class<T> type)
   {
-    return null;
+    if (type == ConnectorFactory.class) {
+      return ImmutableList.of(type.cast(new RecordServiceConnectorFactory(typeManager, nodeManager, optionalConfig)));
+    }
+    return ImmutableList.of();
   }
 }
