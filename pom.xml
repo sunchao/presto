@@ -73,6 +73,7 @@
         <module>presto-spi</module>
         <module>presto-jmx</module>
         <module>presto-record-decoder</module>
+        <module>presto-recordservice</module>
         <module>presto-kafka</module>
         <module>presto-redis</module>
         <module>presto-cassandra</module>
@@ -107,7 +108,6 @@
         <module>presto-docs</module>
         <module>presto-verifier</module>
         <module>presto-testing-server-launcher</module>
-        <module>presto-recordservice</module>
     </modules>
 
     <dependencyManagement>

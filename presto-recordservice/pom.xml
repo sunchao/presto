@@ -17,13 +17,22 @@
   </properties>
 
   <dependencies>
-    <!--
+
     <dependency>
       <groupId>com.cloudera.recordservice</groupId>
       <artifactId>recordservice-core</artifactId>
       <version>0.4.0-cdh5.8.x</version>
+      <scope>system</scope>
+      <!-- TODO: get rid of this -->
+      <systemPath>${project.basedir}/../../RecordServiceClient/java/core/target/recordservice-core-0.4.0-cdh5.8.x.jar</systemPath>
     </dependency>
-    -->
+
+    <!-- Presto SPI -->
+    <dependency>
+      <groupId>com.facebook.presto</groupId>
+      <artifactId>presto-spi</artifactId>
+      <scope>provided</scope>
+    </dependency>
 
     <dependency>
       <groupId>io.airlift</groupId>
@@ -33,13 +42,6 @@
     <dependency>
       <groupId>io.airlift</groupId>
       <artifactId>log</artifactId>
-    </dependency>
-
-    <!-- Presto SPI -->
-    <dependency>
-      <groupId>com.facebook.presto</groupId>
-      <artifactId>presto-spi</artifactId>
-      <scope>provided</scope>
     </dependency>
 
     <dependency>
