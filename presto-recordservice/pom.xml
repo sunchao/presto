@@ -14,7 +14,6 @@
 
   <properties>
     <air.main.basedir>${project.parent.basedir}</air.main.basedir>
-    <checkstyle.skip>true</checkstyle.skip>
   </properties>
 
   <dependencies>
@@ -26,6 +25,18 @@
       <scope>system</scope>
       <!-- TODO: get rid of this -->
       <systemPath>${project.basedir}/../../RecordServiceClient/java/core/target/recordservice-core-0.4.0-cdh5.8.x.jar</systemPath>
+    </dependency>
+
+    <dependency>
+      <groupId>javax.validation</groupId>
+      <artifactId>validation-api</artifactId>
+      <version>1.1.0.Final</version>
+    </dependency>
+
+    <dependency>
+      <groupId>com.google.guava</groupId>
+      <artifactId>guava</artifactId>
+      <version>19.0</version>
     </dependency>
 
     <!-- Presto SPI -->
