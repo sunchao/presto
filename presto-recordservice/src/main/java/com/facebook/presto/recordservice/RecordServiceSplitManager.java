@@ -13,18 +13,66 @@
  */
 package com.facebook.presto.recordservice;
 
-import com.facebook.presto.spi.ConnectorSession;
-import com.facebook.presto.spi.ConnectorSplitSource;
-import com.facebook.presto.spi.ConnectorTableLayoutHandle;
+import com.cloudera.recordservice.core.PlanRequestResult;
+import com.cloudera.recordservice.core.RecordServiceException;
+import com.cloudera.recordservice.core.RecordServicePlannerClient;
+import com.cloudera.recordservice.core.Request;
+import com.cloudera.recordservice.core.Task;
+import com.facebook.presto.spi.*;
 import com.facebook.presto.spi.connector.ConnectorSplitManager;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
+import io.airlift.log.Logger;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
+
+import static java.util.Objects.requireNonNull;
 
 public class RecordServiceSplitManager implements ConnectorSplitManager
 {
+  private final String connectorId;
+  private static final Logger log = Logger.get(RecordServiceSplitManager.class);
+  private final RecordServiceConnectorConfig config;
+
+  public RecordServiceSplitManager(RecordServiceConnectorId  connectorId, RecordServiceConnectorConfig config)
+  {
+    this.connectorId = requireNonNull(connectorId, "connectorId is null").toString();
+    this.config = requireNonNull(config, "RecordServiceConfig is null");
+  }
+
   @Override
   public ConnectorSplitSource getSplits(ConnectorTransactionHandle handle,
       ConnectorSession session, ConnectorTableLayoutHandle layout)
   {
-    return null;
+    Request request = null;
+    Set<HostAddress> planners = config.getPlanners();
+    List<HostAddress> plannerList = new ArrayList<>(planners);
+    Collections.shuffle(plannerList);
+    String plannerHost = plannerList.get(0).getHostText();
+    int port = plannerList.get(0).getPort();
+    try {
+      PlanRequestResult planRequestResult = new RecordServicePlannerClient.Builder()
+          .planRequest(plannerHost, port, request);
+      List<ConnectorSplit> splits = new ArrayList<>();
+      for (Task task : planRequestResult.tasks) {
+        // TODO: Implement a RecordServiceSplitSource with schema info, instead of
+        // wrapping the schema in each split.
+        splits.add(new RecordServiceSplit(connectorId, task, planRequestResult.schema));
+      }
+      Collections.shuffle(splits);
+
+      return new FixedSplitSource(connectorId, splits);
+    }
+    catch (IOException e) {
+      log.error("Failed to getSplits.", e);
+      return null;
+    }
+    catch (RecordServiceException e) {
+      log.error("Failed to getSplits", e);
+      return null;
+    }
   }
 }

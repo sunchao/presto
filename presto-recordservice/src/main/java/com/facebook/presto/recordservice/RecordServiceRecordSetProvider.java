@@ -22,12 +22,27 @@ import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
 
 import java.util.List;
 
+import static com.facebook.presto.recordservice.Types.checkType;
+import static com.google.common.base.Preconditions.checkArgument;
+import static java.util.Objects.requireNonNull;
+
 public class RecordServiceRecordSetProvider implements ConnectorRecordSetProvider
 {
+  private final String connectorId;
+
+  public RecordServiceRecordSetProvider(RecordServiceConnectorId connectorId)
+  {
+    this.connectorId = requireNonNull(connectorId, "connectorId is null").toString();
+  }
+
   @Override
   public RecordSet getRecordSet(ConnectorTransactionHandle transactionHandle,
-     ConnectorSession session, ConnectorSplit split, List<? extends ColumnHandle> columns)
+      ConnectorSession session, ConnectorSplit split, List<? extends ColumnHandle> columns)
   {
+    requireNonNull(split, "split is null");
+    RecordServiceSplit recordServiceSplit = checkType(split, RecordServiceSplit.class, "split");
+    checkArgument(recordServiceSplit.getConnectorId().equals(connectorId), "split is not for this connector");
+    // todo
     return null;
   }
 }
