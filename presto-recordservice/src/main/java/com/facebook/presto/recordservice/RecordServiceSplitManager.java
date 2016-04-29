@@ -40,13 +40,14 @@ public class RecordServiceSplitManager implements ConnectorSplitManager
 {
   private final String connectorId;
   private static final Logger log = Logger.get(RecordServiceSplitManager.class);
-  private final RecordServiceConnectorConfig config;
+  private final RecordServiceClient client;
 
   @Inject
   public RecordServiceSplitManager(RecordServiceConnectorId  connectorId, RecordServiceConnectorConfig config)
   {
     this.connectorId = requireNonNull(connectorId, "connectorId is null").toString();
-    this.config = requireNonNull(config, "RecordServiceConfig is null");
+    requireNonNull(config, "RecordServiceConfig is null");
+    this.client = new RecordServiceClient(config);
   }
 
   @Override
@@ -60,7 +61,7 @@ public class RecordServiceSplitManager implements ConnectorSplitManager
     Request request = Request.createTableScanRequest(layoutHandle.getTable().getSchemaTableName().toString());
 
     try {
-      PlanRequestResult planRequestResult = RecordServiceClient.getPlanResult(config, request);
+      PlanRequestResult planRequestResult = client.getPlanResult(request);
       List<ConnectorSplit> splits = planRequestResult.tasks.stream()
           .map(t -> new RecordServiceSplit(
               connectorId, t.task, t.taskSize, t.taskId.hi,

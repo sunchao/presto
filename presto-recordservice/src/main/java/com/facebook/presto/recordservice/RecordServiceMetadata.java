@@ -46,18 +46,22 @@ public class RecordServiceMetadata implements ConnectorMetadata
 {
   private static final Logger LOG = Logger.get(RecordServiceMetadata.class);
   private final String connectorId;
+  private final RecordServiceClient client;
 
   @Inject
   public RecordServiceMetadata(
-      RecordServiceConnectorId connectorId)
+      RecordServiceConnectorId connectorId,
+      RecordServiceConnectorConfig config)
   {
     this.connectorId = requireNonNull(connectorId, "connectorId is null").toString();
+    requireNonNull(config, "config is null");
+    this.client = new RecordServiceClient(config);
   }
 
   @Override
   public List<String> listSchemaNames(ConnectorSession session)
   {
-    return RecordServiceClient.getDatabases();
+    return client.getDatabases();
   }
 
   @Override
@@ -92,14 +96,14 @@ public class RecordServiceMetadata implements ConnectorMetadata
 
   private ConnectorTableMetadata getTableMetadata(SchemaTableName schemaTableName)
   {
-    Schema schema = RecordServiceClient.getSchema(schemaTableName.getSchemaName(), schemaTableName.getTableName());
+    Schema schema = client.getSchema(schemaTableName.getSchemaName(), schemaTableName.getTableName());
     return new ConnectorTableMetadata(schemaTableName, RecordServiceUtil.extractColumnMetadataList(schema));
   }
 
   @Override
   public List<SchemaTableName> listTables(ConnectorSession session, String schemaNameOrNull)
   {
-    return RecordServiceClient.getTables()
+    return client.getTables(schemaNameOrNull)
         .stream().map(tblName -> new SchemaTableName(schemaNameOrNull, tblName))
         .collect(Collectors.toList());
   }
@@ -109,7 +113,7 @@ public class RecordServiceMetadata implements ConnectorMetadata
   {
     requireNonNull(tableHandle, "tableHandle is null");
     SchemaTableName schemaTableName = schemaTableName(tableHandle);
-    Schema schema = RecordServiceClient.getSchema(schemaTableName.getSchemaName(), schemaTableName.getTableName());
+    Schema schema = client.getSchema(schemaTableName.getSchemaName(), schemaTableName.getTableName());
     ImmutableMap.Builder<String, ColumnHandle> columnHandles = ImmutableMap.builder();
     for (Schema.ColumnDesc columnDesc : schema.cols) {
       columnHandles.put(columnDesc.name,

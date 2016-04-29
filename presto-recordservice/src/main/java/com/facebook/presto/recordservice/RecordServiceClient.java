@@ -31,48 +31,63 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
+import javax.inject.Inject;
+
+import static java.util.Objects.requireNonNull;
+
 public class RecordServiceClient {
+  private static final Logger LOG = Logger.get(RecordServiceClient.class);
+  private final RecordServiceConnectorConfig config;
 
-  private static final Logger log = Logger.get(RecordServiceClient.class);
+  @Inject
+  public RecordServiceClient(RecordServiceConnectorConfig config)
+  {
+    this.config = requireNonNull(config, "config is null");
+  }
 
-  public static List<String> getDatabases()
+  public List<String> getDatabases()
   {
     try {
-      return new RecordServicePlannerClient.Builder().getDatabases("172.21.2.110", 12050);
+      HostAddress plannerAddr = getPlannerHostAddress();
+      return new RecordServicePlannerClient.Builder()
+          .getDatabases(plannerAddr.getHostText(), plannerAddr.getPort());
     } catch (Exception e) {
       throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR, e);
     }
   }
 
-  public static List<String> getTables()
+  public List<String> getTables(String db)
   {
     try {
-      return new RecordServicePlannerClient.Builder().getTables("172.21.2.110", 12050, "tpch");
+      HostAddress plannerAddr = getPlannerHostAddress();
+      return new RecordServicePlannerClient.Builder()
+          .getTables(plannerAddr.getHostText(), plannerAddr.getPort(), db);
     } catch (Exception e) {
       throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR, e);
     }
   }
 
-  public static Schema getSchema(String db, String table) {
+  public Schema getSchema(String db, String table) {
     try {
+      HostAddress plannerAddr = getPlannerHostAddress();
       Request request = Request.createTableScanRequest(db + "." + table);
-      return new RecordServicePlannerClient.Builder().getSchema("172.21.2.110", 12050, request).schema;
+      return new RecordServicePlannerClient.Builder()
+          .getSchema(plannerAddr.getHostText(), plannerAddr.getPort(), request).schema;
     } catch (Exception e) {
       throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR, e);
     }
   }
 
-  public static PlanRequestResult getPlanResult(RecordServiceConnectorConfig config,
-      Request request) throws IOException, RecordServiceException
+  public PlanRequestResult getPlanResult(Request request) throws IOException, RecordServiceException
   {
-    Set<HostAddress> planners = config.getPlanners();
-    List<HostAddress> plannerList = new ArrayList<>(planners);
-    Collections.shuffle(plannerList);
-    String plannerHost = plannerList.get(0).getHostText();
-    int port = plannerList.get(0).getPort();
-    log.info("Get planResult from " + plannerList.get(0).toString());
+    HostAddress plannerAddr = getPlannerHostAddress();
+    LOG.info("Get planResult from " + plannerAddr);
+    return new RecordServicePlannerClient.Builder().planRequest(plannerAddr.getHostText(), plannerAddr.getPort(), request);
+  }
 
-    return new RecordServicePlannerClient.Builder().planRequest(plannerHost, port, request);
+  private HostAddress getPlannerHostAddress()
+  {
+    return config.getPlanners().iterator().next();
   }
 
   public static HostAddress getWorkerHostAddress(List<HostAddress> addresses)
@@ -82,13 +97,13 @@ public class RecordServiceClient {
       localHost = InetAddress.getLocalHost().getHostName();
     }
     catch (UnknownHostException e) {
-      log.error("Failed to get the local host.", e);
+      LOG.error("Failed to get the local host.", e);
     }
 
     // 1. If the data is available on this node, schedule the task locally.
     for (HostAddress add : addresses) {
       if (localHost.equals(add.getHostText())) {
-        log.info("Both data and RecordServiceWorker are available locally for task.");
+        LOG.info("Both data and RecordServiceWorker are available locally for task.");
         return add;
       }
     }
