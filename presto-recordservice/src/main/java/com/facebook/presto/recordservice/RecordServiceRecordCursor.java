@@ -38,10 +38,6 @@ public class RecordServiceRecordCursor implements RecordCursor
   private final Records records;
   private Records.Record nextRecord;
   private List<Schema.TypeDesc> columnTypes;
-  private boolean[] booleanVals;
-  private long[] longVals;
-  private double[] doubleVals;
-  private Slice[] sliceVals;
 
   public RecordServiceRecordCursor(Records records)
   {
@@ -49,10 +45,6 @@ public class RecordServiceRecordCursor implements RecordCursor
     this.nextRecord = null;
     this.columnTypes = records.getSchema().cols.stream()
         .map(columnDesc -> columnDesc.type).collect(Collectors.toList());
-    booleanVals = new boolean[columnTypes.size()];
-    longVals = new long[columnTypes.size()];
-    doubleVals = new double[columnTypes.size()];
-    sliceVals = new Slice[columnTypes.size()];
   }
 
   @Override
@@ -104,61 +96,9 @@ public class RecordServiceRecordCursor implements RecordCursor
       boolean result = records.hasNext();
       if (result) {
         nextRecord = records.next();
-        for (int i = 0; i < columnTypes.size(); ++i)
-        {
-          if (isNull(i)) {
-            continue;
-          }
-
-          switch (columnTypes.get(i).typeId)
-          {
-            case BOOLEAN:
-              booleanVals[i] = nextRecord.nextBoolean(i);
-              break;
-            case TINYINT:
-              longVals[i] = nextRecord.nextByte(i);
-              break;
-            case SMALLINT:
-              longVals[i] = nextRecord.nextShort(i);
-              break;
-            case INT:
-              longVals[i] = nextRecord.nextInt(i);
-              break;
-            case BIGINT:
-              longVals[i] = nextRecord.nextLong(i);
-              break;
-            case FLOAT:
-              doubleVals[i] = nextRecord.nextFloat(i);
-              break;
-            case DOUBLE:
-              doubleVals[i] = nextRecord.nextDouble(i);
-              break;
-            case STRING:
-            case VARCHAR:
-            case CHAR:
-              // TODO: avoid creating string?
-              sliceVals[i] = Slices.utf8Slice(nextRecord.nextByteArray(i).toString());
-              break;
-            case TIMESTAMP_NANOS:
-              // TODO: fix timezone
-              longVals[i] = nextRecord.nextTimestampNanos(i).getMillisSinceEpoch();
-              break;
-            case DECIMAL:
-              // TODO: double check this
-              BigDecimal decimal = nextRecord.nextDecimal(i).toBigDecimal();
-              DecimalType decimalType = (DecimalType) getType(i);
-              decimal = decimal.setScale(decimalType.getScale(), BigDecimal.ROUND_HALF_UP);
-              sliceVals[i] = Decimals.encodeUnscaledValue(decimal.unscaledValue());
-              break;
-            default:
-              throw new PrestoException(RecordServiceErrorCode.TYPE_ERROR,
-                  "Unsupported type " + columnTypes.get(i).typeId);
-          }
-        }
       }
       return result;
-    }
-    catch (Exception e) {
+    } catch (Exception e) {
       throw new PrestoException(RecordServiceErrorCode.CURSOR_ERROR, e);
     }
   }
@@ -166,25 +106,60 @@ public class RecordServiceRecordCursor implements RecordCursor
   @Override
   public boolean getBoolean(int field)
   {
-    return booleanVals[field];
+    return nextRecord.nextBoolean(field);
   }
 
   @Override
-  public long getLong(int field)
-  {
-    return longVals[field];
+  public long getLong(int field) {
+    switch (columnTypes.get(field).typeId) {
+      case TINYINT:
+        return nextRecord.nextByte(field);
+      case SMALLINT:
+        return nextRecord.nextShort(field);
+      case INT:
+        return nextRecord.nextInt(field);
+      case BIGINT:
+        return nextRecord.nextLong(field);
+      case TIMESTAMP_NANOS:
+        return nextRecord.nextTimestampNanos(field).getMillisSinceEpoch();
+      default:
+        throw new PrestoException(RecordServiceErrorCode.CURSOR_ERROR,
+            "Unexpected RecordService type " + columnTypes.get(field).typeId);
+    }
   }
 
   @Override
-  public double getDouble(int field)
-  {
-    return doubleVals[field];
+  public double getDouble(int field) {
+    switch (columnTypes.get(field).typeId) {
+      case FLOAT:
+        return nextRecord.nextFloat(field);
+      case DOUBLE:
+        return nextRecord.nextDouble(field);
+      default:
+        throw new PrestoException(RecordServiceErrorCode.CURSOR_ERROR,
+            "Unexpected RecordService type " + columnTypes.get(field).typeId);
+    }
   }
 
   @Override
   public Slice getSlice(int field)
   {
-    return sliceVals[field];
+    switch (columnTypes.get(field).typeId) {
+      case STRING:
+      case VARCHAR:
+      case CHAR:
+        // TODO: avoid creating string?
+        return Slices.utf8Slice(nextRecord.nextByteArray(field).toString());
+      case DECIMAL:
+        // TODO: double check this
+        BigDecimal decimal = nextRecord.nextDecimal(field).toBigDecimal();
+        DecimalType decimalType = (DecimalType) getType(field);
+        decimal = decimal.setScale(decimalType.getScale(), BigDecimal.ROUND_HALF_UP);
+        return Decimals.encodeUnscaledValue(decimal.unscaledValue());
+      default:
+        throw new PrestoException(RecordServiceErrorCode.CURSOR_ERROR,
+            "Unexpected RecordService type " + columnTypes.get(field).typeId);
+    }
   }
 
   @Override
