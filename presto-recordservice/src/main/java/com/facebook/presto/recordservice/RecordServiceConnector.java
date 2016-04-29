@@ -24,6 +24,7 @@ import com.facebook.presto.spi.transaction.IsolationLevel;
 import io.airlift.bootstrap.LifeCycleManager;
 import io.airlift.log.Logger;
 
+import static com.facebook.presto.recordservice.RecordServiceTransactionHandle.INSTANCE;
 import static java.util.Objects.requireNonNull;
 
 public class RecordServiceConnector implements Connector
@@ -49,7 +50,7 @@ public class RecordServiceConnector implements Connector
   @Override
   public ConnectorTransactionHandle beginTransaction(IsolationLevel isolationLevel, boolean readOnly)
   {
-    return null;
+    return INSTANCE;
   }
 
   @Override
