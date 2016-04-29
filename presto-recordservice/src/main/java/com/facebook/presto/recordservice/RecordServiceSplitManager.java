@@ -30,6 +30,7 @@ import java.util.List;
 
 import javax.inject.Inject;
 
+import static com.facebook.presto.recordservice.Types.checkType;
 import static java.util.Objects.requireNonNull;
 
 public class RecordServiceSplitManager implements ConnectorSplitManager
@@ -49,8 +50,13 @@ public class RecordServiceSplitManager implements ConnectorSplitManager
   public ConnectorSplitSource getSplits(ConnectorTransactionHandle handle,
       ConnectorSession session, ConnectorTableLayoutHandle layout)
   {
-    // TODO: get request info from layout
-    Request request = Request.createSqlRequest("select * from tpch.nation");
+    RecordServiceTableLayoutHandle layoutHandle = checkType(layout,
+        RecordServiceTableLayoutHandle.class, "layout");
+    log.info("getSplits for " + layoutHandle.getTable().getSchemaTableName().toString());
+
+    Request request = Request.createSqlRequest("select * from " +
+        layoutHandle.getTable().getSchemaTableName().toString());
+
     try {
       PlanRequestResult planRequestResult = RecordServiceClient.getPlanResult(config, request);
       List<ConnectorSplit> splits = new ArrayList<>();
