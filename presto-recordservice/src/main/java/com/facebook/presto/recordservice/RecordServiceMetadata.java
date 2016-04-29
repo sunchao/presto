@@ -14,7 +14,6 @@
 package com.facebook.presto.recordservice;
 
 import com.cloudera.recordservice.core.Schema;
-import com.cloudera.recordservice.core.Schema.TypeDesc;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ColumnMetadata;
 import com.facebook.presto.spi.ConnectorSession;
@@ -24,19 +23,9 @@ import com.facebook.presto.spi.ConnectorTableLayoutHandle;
 import com.facebook.presto.spi.ConnectorTableLayoutResult;
 import com.facebook.presto.spi.ConnectorTableMetadata;
 import com.facebook.presto.spi.Constraint;
-import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.SchemaTableName;
 import com.facebook.presto.spi.SchemaTablePrefix;
 import com.facebook.presto.spi.connector.ConnectorMetadata;
-import com.facebook.presto.spi.type.BigintType;
-import com.facebook.presto.spi.type.BooleanType;
-import com.facebook.presto.spi.type.DecimalType;
-import com.facebook.presto.spi.type.DoubleType;
-import com.facebook.presto.spi.type.IntegerType;
-import com.facebook.presto.spi.type.TimestampType;
-import com.facebook.presto.spi.type.Type;
-import com.facebook.presto.spi.type.VarbinaryType;
-import com.facebook.presto.spi.type.VarcharType;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
@@ -104,7 +93,7 @@ public class RecordServiceMetadata implements ConnectorMetadata
   private ConnectorTableMetadata getTableMetadata(SchemaTableName schemaTableName)
   {
     Schema schema = RecordServiceClient.getSchema(schemaTableName.getSchemaName(), schemaTableName.getTableName());
-    return new ConnectorTableMetadata(schemaTableName, extractColumnMetadataList(schema));
+    return new ConnectorTableMetadata(schemaTableName, RecordServiceUtil.extractColumnMetadataList(schema));
   }
 
   @Override
@@ -123,7 +112,8 @@ public class RecordServiceMetadata implements ConnectorMetadata
     Schema schema = RecordServiceClient.getSchema(schemaTableName.getSchemaName(), schemaTableName.getTableName());
     ImmutableMap.Builder<String, ColumnHandle> columnHandles = ImmutableMap.builder();
     for (Schema.ColumnDesc columnDesc : schema.cols) {
-      columnHandles.put(columnDesc.name, new RecordServiceColumnHandle(connectorId, columnDesc.name, convertType(columnDesc.type)));
+      columnHandles.put(columnDesc.name,
+          new RecordServiceColumnHandle(connectorId, columnDesc.name, RecordServiceUtil.convertType(columnDesc.type)));
     }
     return columnHandles.build();
   }
@@ -158,40 +148,5 @@ public class RecordServiceMetadata implements ConnectorMetadata
       return listTables(session, prefix.getSchemaName());
     }
     return ImmutableList.of(new SchemaTableName(prefix.getSchemaName(), prefix.getTableName()));
-  }
-
-  private List<ColumnMetadata> extractColumnMetadataList(Schema schema) {
-    return schema.cols.stream()
-        .map(columnDesc -> new ColumnMetadata(columnDesc.name, convertType(columnDesc.type)))
-        .collect(Collectors.toList());
-  }
-
-  private Type convertType(TypeDesc typeDesc) {
-    switch (typeDesc.typeId) {
-      case BOOLEAN:
-        return BooleanType.BOOLEAN;
-      case TINYINT:
-      case SMALLINT:
-      case INT:
-        return IntegerType.INTEGER;
-      case BIGINT:
-        return BigintType.BIGINT;
-      case FLOAT:
-      case DOUBLE:
-        return DoubleType.DOUBLE;
-      case STRING:
-        return VarbinaryType.VARBINARY;
-      case VARCHAR:
-        return VarcharType.VARCHAR;
-      case CHAR:
-        return VarcharType.createVarcharType(typeDesc.len);
-      case TIMESTAMP_NANOS:
-        return TimestampType.TIMESTAMP;
-      case DECIMAL:
-        return DecimalType.createDecimalType(typeDesc.precision, typeDesc.len);
-      default:
-        throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR,
-            "Unsupported RecordService type " + typeDesc.typeId.name());
-    }
   }
 }

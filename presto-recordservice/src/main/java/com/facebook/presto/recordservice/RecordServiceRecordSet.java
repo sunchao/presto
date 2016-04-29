@@ -66,7 +66,9 @@ public class RecordServiceRecordSet implements RecordSet, Closeable
   @Override
   public List<Type> getColumnTypes()
   {
-    return null;
+    return records.getSchema().cols.stream()
+        .map(columnDesc -> RecordServiceUtil.convertType(columnDesc.type))
+        .collect(Collectors.toList());
   }
 
   @Override
