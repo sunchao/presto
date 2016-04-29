@@ -26,10 +26,12 @@ public class RecordServiceRecordCursor implements RecordCursor
 {
   private static final Logger log = Logger.get(RecordServiceSplitManager.class);
   private final Records records;
+  private Records.Record nextRecord;
 
   public RecordServiceRecordCursor(Records records)
   {
     this.records = records;
+    this.nextRecord = null;
   }
 
   @Override
@@ -78,7 +80,7 @@ public class RecordServiceRecordCursor implements RecordCursor
   public boolean advanceNextPosition()
   {
     try {
-      return records.hasNext();
+      return nextRecord != null || records.hasNext();
     }
     catch (IOException e) {
       log.error("Failed to advanceNextPosition.", e);
@@ -93,7 +95,12 @@ public class RecordServiceRecordCursor implements RecordCursor
   public boolean getBoolean(int field)
   {
     try {
-      return records.next().nextBoolean(field);
+      if (nextRecord == null) {
+        nextRecord = records.next();
+      }
+      Records.Record curRecord = nextRecord;
+      nextRecord = records.next();
+      return curRecord.nextBoolean(field);
     }
     catch (IOException e) {
       log.error("Failed to getBoolean.", e);
@@ -105,7 +112,12 @@ public class RecordServiceRecordCursor implements RecordCursor
   public long getLong(int field)
   {
     try {
-      return records.next().nextLong(field);
+      if (nextRecord == null) {
+        nextRecord = records.next();
+      }
+      Records.Record curRecord = nextRecord;
+      nextRecord = records.next();
+      return curRecord.nextLong(field);
     }
     catch (IOException e) {
       log.error("Failed to getLong.", e);
@@ -117,7 +129,12 @@ public class RecordServiceRecordCursor implements RecordCursor
   public double getDouble(int field)
   {
     try {
-      return records.next().nextDouble(field);
+      if (nextRecord == null) {
+        nextRecord = records.next();
+      }
+      Records.Record curRecord = nextRecord;
+      nextRecord = records.next();
+      return curRecord.nextDouble(field);
     }
     catch (IOException e) {
       log.error("Failed to getDouble.", e);
@@ -140,7 +157,13 @@ public class RecordServiceRecordCursor implements RecordCursor
   @Override
   public boolean isNull(int field)
   {
-    throw new UnsupportedOperationException();
+    try {
+      if (nextRecord == null) nextRecord = records.next();
+      return nextRecord == null || nextRecord.isNull(field);
+    } catch (IOException e) {
+      log.error("Failed to isNull.", e);
+    }
+    throw new RuntimeException("Failed to isNull.");
   }
 
   @Override
