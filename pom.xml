@@ -657,6 +657,15 @@
             </dependency>
 
             <dependency>
+              <groupId>com.cloudera.recordservice</groupId>
+              <artifactId>recordservice-core</artifactId>
+              <version>0.4.0-cdh5.8.x</version>
+              <scope>system</scope>
+              <!-- TODO: get rid of this -->
+              <systemPath>${project.basedir}/../../RecordServiceClient/java/core/target/recordservice-core-0.4.0-cdh5.8.x.jar</systemPath>
+            </dependency>
+
+            <dependency>
                 <groupId>org.xerial.snappy</groupId>
                 <artifactId>snappy-java</artifactId>
                 <version>1.1.1.3</version>
@@ -740,6 +749,41 @@
 
         </dependencies>
     </dependencyManagement>
+
+    <repositories>
+      <repository>
+        <id>cdh.rcs.releases.repo</id>
+        <url>https://repository.cloudera.com/content/groups/cdh-releases-rcs</url>
+        <name>CDH Releases Repository</name>
+        <snapshots>
+          <enabled>true</enabled>
+        </snapshots>
+      </repository>
+      <repository>
+        <id>cdh.releases.repo</id>
+        <url>https://repository.cloudera.com/content/repositories/releases</url>
+        <name>CDH Releases Repository</name>
+        <snapshots>
+          <enabled>false</enabled>
+        </snapshots>
+      </repository>
+      <repository>
+        <id>cdh.snapshots.repo</id>
+        <url>https://repository.cloudera.com/content/repositories/snapshots</url>
+        <name>CDH Snapshots Repository</name>
+        <snapshots>
+          <enabled>true</enabled>
+        </snapshots>
+      </repository>
+      <repository>
+        <id>cloudera.thirdparty.repo</id>
+        <url>https://repository.cloudera.com/content/repositories/third-party</url>
+        <name>Cloudera Third Party Repository</name>
+        <snapshots>
+          <enabled>false</enabled>
+        </snapshots>
+      </repository>
+    </repositories>
 
     <build>
         <pluginManagement>

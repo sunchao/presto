@@ -80,6 +80,12 @@
         </artifact>
     </artifactSet>
 
+    <artifactSet to="plugin/recordservice">
+        <artifact id="${project.groupId}:presto-recordservice:zip:${project.version}">
+            <unpack />
+        </artifact>
+    </artifactSet>
+    
     <artifactSet to="plugin/ml">
         <artifact id="${project.groupId}:presto-ml:zip:${project.version}">
             <unpack />

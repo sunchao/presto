@@ -50,7 +50,7 @@ public class RecordServiceConnectorFactory implements ConnectorFactory {
 
   @Override
   public ConnectorHandleResolver getHandleResolver() {
-    return null;
+    return new RecordServiceHandleResolver();
   }
 
   @Override
@@ -61,12 +61,7 @@ public class RecordServiceConnectorFactory implements ConnectorFactory {
     try {
       Bootstrap app = new Bootstrap(
           new JsonModule(),
-          new RecordServiceModule(),
-          binder -> {
-            binder.bind(RecordServiceConnectorId.class).toInstance(new RecordServiceConnectorId(connectorId));
-            binder.bind(TypeManager.class).toInstance(typeManager);
-            binder.bind(NodeManager.class).toInstance(nodeManager);
-          }
+          new RecordServiceModule(connectorId, typeManager)
       );
 
       Injector injector = app.strictConfig()

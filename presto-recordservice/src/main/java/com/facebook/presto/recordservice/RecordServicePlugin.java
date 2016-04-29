@@ -19,10 +19,11 @@ import com.facebook.presto.spi.connector.ConnectorFactory;
 import com.facebook.presto.spi.type.TypeManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
-import com.google.inject.Inject;
 
 import java.util.List;
 import java.util.Map;
+
+import javax.inject.Inject;
 
 import static java.util.Objects.requireNonNull;
 

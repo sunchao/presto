@@ -68,7 +68,7 @@ public class KafkaConnectorModule
     }
 
     public static final class TypeDeserializer
-            extends FromStringDeserializer<Type>
+        extends FromStringDeserializer<Type>
     {
         private static final long serialVersionUID = 1L;
 

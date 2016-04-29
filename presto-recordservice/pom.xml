@@ -20,10 +20,6 @@
     <dependency>
       <groupId>com.cloudera.recordservice</groupId>
       <artifactId>recordservice-core</artifactId>
-      <version>0.4.0-cdh5.8.x</version>
-      <scope>system</scope>
-      <!-- TODO: get rid of this -->
-      <systemPath>${project.basedir}/../../RecordServiceClient/java/core/target/recordservice-core-0.4.0-cdh5.8.x.jar</systemPath>
     </dependency>
 
     <dependency>
@@ -100,6 +96,11 @@
       <artifactId>guice</artifactId>
     </dependency>
 
+    <dependency>
+      <groupId>javax.validation</groupId>
+      <artifactId>validation-api</artifactId>
+    </dependency>
+
     <!-- for testing -->
     <dependency>
       <groupId>org.testng</groupId>
@@ -162,60 +163,11 @@
     </dependency>
   </dependencies>
 
-  <repositories>
-    <repository>
-      <id>cdh.rcs.releases.repo</id>
-      <url>https://repository.cloudera.com/content/groups/cdh-releases-rcs</url>
-      <name>CDH Releases Repository</name>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>cdh.releases.repo</id>
-      <url>https://repository.cloudera.com/content/repositories/releases</url>
-      <name>CDH Releases Repository</name>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>cdh.snapshots.repo</id>
-      <url>https://repository.cloudera.com/content/repositories/snapshots</url>
-      <name>CDH Snapshots Repository</name>
-      <snapshots>
-        <enabled>true</enabled>
-      </snapshots>
-    </repository>
-    <repository>
-      <id>cloudera.thirdparty.repo</id>
-      <url>https://repository.cloudera.com/content/repositories/third-party</url>
-      <name>Cloudera Third Party Repository</name>
-      <snapshots>
-        <enabled>false</enabled>
-      </snapshots>
-    </repository>
-  </repositories>
-
   <build>
     <plugins>
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-surefire-plugin</artifactId>
-        <configuration>
-          <!-- integration tests take a very long time so only run them in the CI server -->
-          <excludes>
-            <exclude>**/TestKafkaDistributed.java</exclude>
-          </excludes>
-        </configuration>
-      </plugin>
-      <plugin>
-        <groupId>org.apache.maven.plugins</groupId>
-        <artifactId>maven-checkstyle-plugin</artifactId>
-        <configuration>
-          <!-- TODO: re-enable this -->
-          <skip>true</skip>
-        </configuration>
       </plugin>
     </plugins>
   </build>
