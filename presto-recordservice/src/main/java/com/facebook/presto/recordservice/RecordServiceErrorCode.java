@@ -19,7 +19,10 @@ import com.facebook.presto.spi.ErrorCodeSupplier;
 public enum RecordServiceErrorCode implements ErrorCodeSupplier
 {
   CATALOG_ERROR(0),
-  PLAN_ERROR(1);
+  PLAN_ERROR(1),
+  TASK_ERROR(2),
+  CURSOR_ERROR(3),
+  TYPE_ERROR(4);
 
   private final ErrorCode errorCode;
 

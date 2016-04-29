@@ -15,23 +15,40 @@ package com.facebook.presto.recordservice;
 
 import com.cloudera.recordservice.core.RecordServiceException;
 import com.cloudera.recordservice.core.Records;
+import com.cloudera.recordservice.core.Schema;
+import com.facebook.presto.spi.ColumnMetadata;
+import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.RecordCursor;
 import com.facebook.presto.spi.type.Type;
 import io.airlift.log.Logger;
 import io.airlift.slice.Slice;
+import io.airlift.slice.Slices;
 
 import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
 
 public class RecordServiceRecordCursor implements RecordCursor
 {
   private static final Logger log = Logger.get(RecordServiceSplitManager.class);
   private final Records records;
   private Records.Record nextRecord;
+  private List<Schema.TypeDesc> columnTypes;
+  private boolean[] booleanVals;
+  private long[] longVals;
+  private double[] doubleVals;
+  private Slice[] sliceVals;
 
   public RecordServiceRecordCursor(Records records)
   {
     this.records = records;
     this.nextRecord = null;
+    this.columnTypes = records.getSchema().cols.stream()
+        .map(columnDesc -> columnDesc.type).collect(Collectors.toList());
+    booleanVals = new boolean[columnTypes.size()];
+    longVals = new long[columnTypes.size()];
+    doubleVals = new double[columnTypes.size()];
+    sliceVals = new Slice[columnTypes.size()];
   }
 
   @Override
@@ -73,79 +90,83 @@ public class RecordServiceRecordCursor implements RecordCursor
   @Override
   public Type getType(int field)
   {
-    throw new UnsupportedOperationException();
+    return RecordServiceUtil.convertType(records.getSchema().cols.get(field).type);
   }
 
   @Override
   public boolean advanceNextPosition()
   {
     try {
-      return nextRecord != null || records.hasNext();
+      boolean result = records.hasNext();
+      if (result) {
+        nextRecord = records.next();
+        for (int i = 0; i < columnTypes.size(); ++i)
+        {
+          switch (columnTypes.get(i).typeId)
+          {
+            case BOOLEAN:
+              booleanVals[i] = nextRecord.nextBoolean(i);
+              break;
+            case TINYINT:
+              longVals[i] = nextRecord.nextByte(i);
+              break;
+            case SMALLINT:
+              longVals[i] = nextRecord.nextShort(i);
+              break;
+            case INT:
+              longVals[i] = nextRecord.nextInt(i);
+              break;
+            case BIGINT:
+              longVals[i] = nextRecord.nextLong(i);
+              break;
+            case FLOAT:
+              doubleVals[i] = nextRecord.nextFloat(i);
+              break;
+            case DOUBLE:
+              doubleVals[i] = nextRecord.nextDouble(i);
+              break;
+            case STRING:
+            case VARCHAR:
+            case CHAR:
+              // TODO: avoid creating string?
+              sliceVals[i] = Slices.utf8Slice(nextRecord.nextByteArray(i).toString());
+              break;
+            default:
+              // TODO: handle decimal and timestamp
+              throw new PrestoException(RecordServiceErrorCode.TYPE_ERROR,
+                  "Unsupported type " + columnTypes.get(i).typeId);
+          }
+        }
+      }
+      return result;
     }
-    catch (IOException e) {
-      log.error("Failed to advanceNextPosition.", e);
+    catch (Exception e) {
+      throw new PrestoException(RecordServiceErrorCode.CURSOR_ERROR, e);
     }
-    catch (RecordServiceException e) {
-      log.error("Failed to advanceNextPosition.", e);
-    }
-    return false;
   }
 
   @Override
   public boolean getBoolean(int field)
   {
-    try {
-      if (nextRecord == null) {
-        nextRecord = records.next();
-      }
-      Records.Record curRecord = nextRecord;
-      nextRecord = records.next();
-      return curRecord.nextBoolean(field);
-    }
-    catch (IOException e) {
-      log.error("Failed to getBoolean.", e);
-    }
-    throw new RuntimeException("Failed to getBoolean.");
+    return booleanVals[field];
   }
 
   @Override
   public long getLong(int field)
   {
-    try {
-      if (nextRecord == null) {
-        nextRecord = records.next();
-      }
-      Records.Record curRecord = nextRecord;
-      nextRecord = records.next();
-      return curRecord.nextLong(field);
-    }
-    catch (IOException e) {
-      log.error("Failed to getLong.", e);
-    }
-    throw new RuntimeException("Failed to getLong.");
+    return longVals[field];
   }
 
   @Override
   public double getDouble(int field)
   {
-    try {
-      if (nextRecord == null) {
-        nextRecord = records.next();
-      }
-      Records.Record curRecord = nextRecord;
-      nextRecord = records.next();
-      return curRecord.nextDouble(field);
-    }
-    catch (IOException e) {
-      log.error("Failed to getDouble.", e);
-    }
-    throw new RuntimeException("Failed to getDouble.");
+    return doubleVals[field];
   }
 
   @Override
   public Slice getSlice(int field)
   {
-    throw new UnsupportedOperationException();
+    return sliceVals[field];
   }
 
   @Override
@@ -157,13 +178,7 @@ public class RecordServiceRecordCursor implements RecordCursor
   @Override
   public boolean isNull(int field)
   {
-    try {
-      if (nextRecord == null) nextRecord = records.next();
-      return nextRecord == null || nextRecord.isNull(field);
-    } catch (IOException e) {
-      log.error("Failed to isNull.", e);
-    }
-    throw new RuntimeException("Failed to isNull.");
+    return nextRecord.isNull(field);
   }
 
   @Override

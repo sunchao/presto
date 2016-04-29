@@ -26,7 +26,6 @@ import com.facebook.presto.spi.type.DoubleType;
 import com.facebook.presto.spi.type.IntegerType;
 import com.facebook.presto.spi.type.TimestampType;
 import com.facebook.presto.spi.type.Type;
-import com.facebook.presto.spi.type.VarbinaryType;
 import com.facebook.presto.spi.type.VarcharType;
 
 public class RecordServiceUtil
@@ -53,7 +52,6 @@ public class RecordServiceUtil
       case DOUBLE:
         return DoubleType.DOUBLE;
       case STRING:
-        return VarbinaryType.VARBINARY;
       case VARCHAR:
         return VarcharType.VARCHAR;
       case CHAR:
