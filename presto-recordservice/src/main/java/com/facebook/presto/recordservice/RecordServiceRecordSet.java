@@ -16,6 +16,10 @@ package com.facebook.presto.recordservice;
 import com.cloudera.recordservice.core.RecordServiceException;
 import com.cloudera.recordservice.core.RecordServiceWorkerClient;
 import com.cloudera.recordservice.core.Records;
+import com.cloudera.recordservice.core.Task;
+import com.cloudera.recordservice.thrift.TNetworkAddress;
+import com.cloudera.recordservice.thrift.TTask;
+import com.cloudera.recordservice.thrift.TUniqueId;
 import com.facebook.presto.spi.HostAddress;
 import com.facebook.presto.spi.RecordCursor;
 import com.facebook.presto.spi.RecordSet;
@@ -25,6 +29,7 @@ import io.airlift.log.Logger;
 import java.io.Closeable;
 import java.io.IOException;
 import java.util.List;
+import java.util.stream.Collectors;
 
 public class RecordServiceRecordSet implements RecordSet, Closeable
 {
@@ -41,7 +46,7 @@ public class RecordServiceRecordSet implements RecordSet, Closeable
     try {
       workerClient =
           new RecordServiceWorkerClient.Builder().connect(host.getHostText(), host.getPort());
-      records = workerClient.execAndFetch(split.getTask());
+      records = workerClient.execAndFetch(fromSplit(split));
       records.setCloseWorker(true);
     }
     catch (RecordServiceException e) {
@@ -75,5 +80,18 @@ public class RecordServiceRecordSet implements RecordSet, Closeable
   {
     if (records != null) records.close();
     if (workerClient != null) workerClient.close();
+  }
+
+  private Task fromSplit(RecordServiceSplit split) {
+    TTask thriftTask = new TTask();
+    thriftTask.setTask(split.getTask());
+    thriftTask.setLocal_hosts(
+        split.getAddresses().stream()
+            .map(addr -> new TNetworkAddress(addr.getHostText(), addr.getPort()))
+            .collect(Collectors.toList()));
+    thriftTask.setResults_ordered(split.getResultOrdered());
+    thriftTask.setTask_size(split.getTaskSize());
+    thriftTask.setTask_id(new TUniqueId(split.getHi(), split.getLo()));
+    return new Task(thriftTask);
   }
 }

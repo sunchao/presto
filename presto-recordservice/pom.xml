@@ -35,6 +35,11 @@
       <version>19.0</version>
     </dependency>
 
+    <dependency>
+      <groupId>com.facebook.presto</groupId>
+      <artifactId>presto-record-decoder</artifactId>
+    </dependency>
+
     <!-- Presto SPI -->
     <dependency>
       <groupId>com.facebook.presto</groupId>

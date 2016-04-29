@@ -195,10 +195,10 @@ public class HiveSplit
     public String toString()
     {
         return toStringHelper(this)
-                .addValue(path)
-                .addValue(start)
-                .addValue(length)
-                .addValue(effectivePredicate)
-                .toString();
+            .addValue(path)
+            .addValue(start)
+            .addValue(length)
+            .addValue(effectivePredicate)
+            .toString();
     }
 }

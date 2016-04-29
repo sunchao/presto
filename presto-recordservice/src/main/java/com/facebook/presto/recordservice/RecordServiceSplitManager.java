@@ -13,6 +13,7 @@
  */
 package com.facebook.presto.recordservice;
 
+import com.cloudera.recordservice.core.NetworkAddress;
 import com.cloudera.recordservice.core.PlanRequestResult;
 import com.cloudera.recordservice.core.RecordServiceException;
 import com.cloudera.recordservice.core.Request;
@@ -20,6 +21,7 @@ import com.cloudera.recordservice.core.Task;
 import com.facebook.presto.spi.*;
 import com.facebook.presto.spi.connector.ConnectorSplitManager;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
+import com.google.common.collect.ImmutableList;
 
 import io.airlift.log.Logger;
 
@@ -27,6 +29,7 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 import javax.inject.Inject;
 
@@ -54,27 +57,28 @@ public class RecordServiceSplitManager implements ConnectorSplitManager
         RecordServiceTableLayoutHandle.class, "layout");
     log.info("getSplits for " + layoutHandle.getTable().getSchemaTableName().toString());
 
-    Request request = Request.createSqlRequest("select * from " +
-        layoutHandle.getTable().getSchemaTableName().toString());
+    Request request = Request.createTableScanRequest(layoutHandle.getTable().getSchemaTableName().toString());
 
     try {
       PlanRequestResult planRequestResult = RecordServiceClient.getPlanResult(config, request);
-      List<ConnectorSplit> splits = new ArrayList<>();
-      for (Task task : planRequestResult.tasks) {
-        // TODO: is schema info required here?
-        splits.add(new RecordServiceSplit(connectorId, task, planRequestResult.hosts));
-      }
+      List<ConnectorSplit> splits = planRequestResult.tasks.stream()
+          .map(t -> new RecordServiceSplit(
+              connectorId, t.task, t.taskSize, t.taskId.hi,
+              t.taskId.lo, t.resultsOrdered, toHostAddress(planRequestResult.hosts)))
+          .collect(Collectors.toList());
       Collections.shuffle(splits);
 
       return new FixedSplitSource(connectorId, splits);
     }
-    catch (IOException e) {
-      log.error("Failed to getSplits.", e);
+    catch (Exception e) {
+      throw new PrestoException(RecordServiceErrorCode.PLAN_ERROR, e);
     }
-    catch (RecordServiceException e) {
-      log.error("Failed to getSplits", e);
-    }
-
-    return null;
   }
+
+  private List<HostAddress> toHostAddress(List<NetworkAddress> addresses)
+  {
+    return addresses.stream().map(addr -> HostAddress.fromParts(addr.hostname, addr.port))
+      .collect(Collectors.toList());
+  }
+
 }

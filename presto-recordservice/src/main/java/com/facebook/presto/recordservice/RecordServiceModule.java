@@ -15,6 +15,8 @@ package com.facebook.presto.recordservice;
 
 import javax.inject.Inject;
 
+import com.cloudera.recordservice.core.Task;
+import com.facebook.presto.decoder.DecoderModule;
 import com.facebook.presto.spi.type.Type;
 import com.facebook.presto.spi.type.TypeManager;
 import com.fasterxml.jackson.databind.DeserializationContext;
@@ -27,6 +29,7 @@ import static com.facebook.presto.spi.type.TypeSignature.parseTypeSignature;
 import static com.google.common.base.Preconditions.checkArgument;
 import static io.airlift.configuration.ConfigBinder.configBinder;
 import static io.airlift.json.JsonBinder.jsonBinder;
+import static io.airlift.json.JsonCodecBinder.jsonCodecBinder;
 import static java.util.Objects.requireNonNull;
 
 public class RecordServiceModule implements Module
@@ -50,7 +53,9 @@ public class RecordServiceModule implements Module
     binder.bind(RecordServiceSplitManager.class).in(Scopes.SINGLETON);
     binder.bind(RecordServiceRecordSetProvider.class).in(Scopes.SINGLETON);
     configBinder(binder).bindConfig(RecordServiceConnectorConfig.class);
+    jsonCodecBinder(binder).bindJsonCodec(Task.class);
 
+    binder.install(new DecoderModule());
     jsonBinder(binder).addDeserializerBinding(Type.class).to(TypeDeserializer.class);
   }
 

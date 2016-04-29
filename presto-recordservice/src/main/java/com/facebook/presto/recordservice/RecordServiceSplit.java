@@ -13,32 +13,46 @@
  */
 package com.facebook.presto.recordservice;
 
-import com.cloudera.recordservice.core.NetworkAddress;
-import com.cloudera.recordservice.core.Schema;
-import com.cloudera.recordservice.core.Task;
 import com.facebook.presto.spi.ConnectorSplit;
 import com.facebook.presto.spi.HostAddress;
+import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
-import sun.nio.ch.Net;
+import com.google.common.collect.ImmutableList;
+import com.google.common.collect.ImmutableMap;
 
-import java.util.LinkedList;
 import java.util.List;
+
+import static com.google.common.base.MoreObjects.toStringHelper;
+import static java.util.Objects.requireNonNull;
 
 public class RecordServiceSplit implements ConnectorSplit
 {
   private final String connectorId;
-  private final Task task;
-  private final List<HostAddress> addresses;
+  private final byte[] task;
+  private final long taskSize;
+  private final long hi;
+  private final long lo;
+  private final boolean resultOrdered;
+  private final List<HostAddress> localHosts;
 
-  public RecordServiceSplit(String connectorId, Task task, List<NetworkAddress> hosts)
+  @JsonCreator
+  public RecordServiceSplit(
+      @JsonProperty("connectorId") String connectorId,
+      @JsonProperty("task") byte[] task,
+      @JsonProperty("taskSize") long taskSize,
+      @JsonProperty("hi") long hi,
+      @JsonProperty("lo") long lo,
+      @JsonProperty("resultOrdered") boolean resultOrdered,
+      @JsonProperty("hosts") List<HostAddress> hosts)
   {
-    this.connectorId = connectorId;
-    this.task = task;
-    List<HostAddress> list = new LinkedList<>();
-    for (NetworkAddress add : hosts) {
-      list.add(HostAddress.fromParts(add.hostname, add.port));
-    }
-    this.addresses = list;
+
+    this.connectorId = requireNonNull(connectorId, "connectorId is null");
+    this.task = requireNonNull(task, "task is null");
+    this.taskSize = requireNonNull(taskSize, "taskSize is null");
+    this.hi = hi;
+    this.lo = lo;
+    this.resultOrdered = resultOrdered;
+    this.localHosts = ImmutableList.copyOf(requireNonNull(hosts, "host is null"));
   }
 
   @Override
@@ -47,26 +61,70 @@ public class RecordServiceSplit implements ConnectorSplit
     return true;
   }
 
+  @JsonProperty
   @Override
   public List<HostAddress> getAddresses()
   {
-    return addresses;
+    return localHosts;
   }
 
   @Override
   public Object getInfo()
   {
-    return this;
+    return ImmutableMap.builder()
+        .put("task", task)
+        .put("taskSize", taskSize)
+        .put("hi", hi)
+        .put("lo", lo)
+        .put("resultOrdered", resultOrdered)
+        .put("localHosts", localHosts)
+        .build();
   }
 
-  public Task getTask()
+  @Override
+  public String toString()
   {
-    return task;
+    return toStringHelper(this)
+        .addValue(task)
+        .addValue(taskSize)
+        .addValue(hi)
+        .addValue(lo)
+        .toString();
   }
 
   @JsonProperty
   public String getConnectorId()
   {
     return connectorId;
+  }
+
+  @JsonProperty
+  public byte[] getTask()
+  {
+    return task;
+  }
+
+  @JsonProperty
+  public long getTaskSize()
+  {
+    return taskSize;
+  }
+
+  @JsonProperty
+  public long getHi()
+  {
+    return hi;
+  }
+
+  @JsonProperty
+  public long getLo()
+  {
+    return lo;
+  }
+
+  @JsonProperty
+  public boolean getResultOrdered()
+  {
+    return resultOrdered;
   }
 }
