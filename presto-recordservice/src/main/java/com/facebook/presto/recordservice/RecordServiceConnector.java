@@ -13,6 +13,8 @@
  */
 package com.facebook.presto.recordservice;
 
+import javax.inject.Inject;
+
 import com.facebook.presto.spi.connector.Connector;
 import com.facebook.presto.spi.connector.ConnectorMetadata;
 import com.facebook.presto.spi.connector.ConnectorRecordSetProvider;
@@ -33,6 +35,7 @@ public class RecordServiceConnector implements Connector
   private final RecordServiceSplitManager splitManager;
   private final RecordServiceRecordSetProvider recordSetProvider;
 
+  @Inject
   public RecordServiceConnector(LifeCycleManager lifeCycleManager,
       RecordServiceMetadata metadata, RecordServiceSplitManager splitManager,
       RecordServiceRecordSetProvider recordSetProvider)

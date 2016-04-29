@@ -20,12 +20,15 @@ import com.cloudera.recordservice.core.Task;
 import com.facebook.presto.spi.*;
 import com.facebook.presto.spi.connector.ConnectorSplitManager;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
+
 import io.airlift.log.Logger;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+
+import javax.inject.Inject;
 
 import static java.util.Objects.requireNonNull;
 
@@ -35,6 +38,7 @@ public class RecordServiceSplitManager implements ConnectorSplitManager
   private static final Logger log = Logger.get(RecordServiceSplitManager.class);
   private final RecordServiceConnectorConfig config;
 
+  @Inject
   public RecordServiceSplitManager(RecordServiceConnectorId  connectorId, RecordServiceConnectorConfig config)
   {
     this.connectorId = requireNonNull(connectorId, "connectorId is null").toString();

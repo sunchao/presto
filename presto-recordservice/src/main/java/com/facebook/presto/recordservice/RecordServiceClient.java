@@ -18,6 +18,8 @@ import com.cloudera.recordservice.core.RecordServiceException;
 import com.cloudera.recordservice.core.RecordServicePlannerClient;
 import com.cloudera.recordservice.core.Request;
 import com.facebook.presto.spi.HostAddress;
+import com.facebook.presto.spi.PrestoException;
+
 import io.airlift.log.Logger;
 
 import java.io.IOException;
@@ -31,6 +33,24 @@ import java.util.Set;
 public class RecordServiceClient {
 
   private static final Logger log = Logger.get(RecordServiceClient.class);
+
+  public static List<String> getDatabases()
+  {
+    try {
+      return new RecordServicePlannerClient.Builder().getDatabases("172.21.2.110", 12050);
+    } catch (Exception e) {
+      throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR, e);
+    }
+  }
+
+  public static List<String> getTables()
+  {
+    try {
+      return new RecordServicePlannerClient.Builder().getTables("172.21.2.110", 12050, "tpch");
+    } catch (Exception e) {
+      throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR, e);
+    }
+  }
 
   public static PlanRequestResult getPlanResult(RecordServiceConnectorConfig config,
       Request request) throws IOException, RecordServiceException

@@ -20,6 +20,8 @@ import io.airlift.log.Logger;
 
 import java.util.List;
 
+import javax.inject.Inject;
+
 import static com.facebook.presto.recordservice.Types.checkType;
 import static com.google.common.base.Preconditions.checkArgument;
 import static java.util.Objects.requireNonNull;
@@ -29,6 +31,7 @@ public class RecordServiceRecordSetProvider implements ConnectorRecordSetProvide
   private final String connectorId;
   private static final Logger log = Logger.get(RecordServiceRecordSetProvider.class);
 
+  @Inject
   public RecordServiceRecordSetProvider(RecordServiceConnectorId connectorId)
   {
     this.connectorId = requireNonNull(connectorId, "connectorId is null").toString();

@@ -14,7 +14,6 @@
 package com.facebook.presto.recordservice;
 
 import com.cloudera.recordservice.core.RecordServiceException;
-import com.cloudera.recordservice.core.RecordServicePlannerClient;
 import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.ColumnMetadata;
 import com.facebook.presto.spi.ConnectorSession;
@@ -24,7 +23,6 @@ import com.facebook.presto.spi.ConnectorTableLayoutHandle;
 import com.facebook.presto.spi.ConnectorTableLayoutResult;
 import com.facebook.presto.spi.ConnectorTableMetadata;
 import com.facebook.presto.spi.Constraint;
-import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.SchemaTableName;
 import com.facebook.presto.spi.SchemaTablePrefix;
 import com.facebook.presto.spi.connector.ConnectorMetadata;
@@ -32,7 +30,6 @@ import io.airlift.log.Logger;
 
 import javax.inject.Inject;
 
-import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
@@ -45,32 +42,18 @@ public class RecordServiceMetadata implements ConnectorMetadata
 {
   private static final Logger log = Logger.get(RecordServiceMetadata.class);
   private final String connectorId;
-  // TODO: close plannerClient ?
-  private final RecordServicePlannerClient plannerClient;
 
   @Inject
   public RecordServiceMetadata(
-      RecordServiceConnectorId connectorId,
-      RecordServicePlannerClient plannerClient)
+      RecordServiceConnectorId connectorId)
   {
     this.connectorId = requireNonNull(connectorId, "connectorId is null").toString();
-    this.plannerClient = requireNonNull(plannerClient, "plannerClient is null");
   }
 
   @Override
   public List<String> listSchemaNames(ConnectorSession session)
   {
-    try {
-      return plannerClient.getDatabases();
-    }
-    catch (IOException e) {
-      log.error("Failed to listSchemaNames.", e);
-      throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR, e);
-    }
-    catch (RecordServiceException e) {
-      log.error("Failed to listSchemaNames.", e);
-      throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR, e);
-    }
+    return RecordServiceClient.getDatabases();
   }
 
   @Override
@@ -103,20 +86,9 @@ public class RecordServiceMetadata implements ConnectorMetadata
   @Override
   public List<SchemaTableName> listTables(ConnectorSession session, String schemaNameOrNull)
   {
-    try {
-      return plannerClient.getTables(schemaNameOrNull)
-          .stream()
-          .map(tblName -> new SchemaTableName(schemaNameOrNull, tblName))
-          .collect(Collectors.toList());
-    }
-    catch (IOException e) {
-      log.error("Failed to listTables.", e);
-      throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR, e);
-    }
-    catch (RecordServiceException e) {
-      log.error("Failed to listTables.", e);
-      throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR, e);
-    }
+    return RecordServiceClient.getTables()
+        .stream().map(tblName -> new SchemaTableName(schemaNameOrNull, tblName))
+        .collect(Collectors.toList());
   }
 
   @Override
