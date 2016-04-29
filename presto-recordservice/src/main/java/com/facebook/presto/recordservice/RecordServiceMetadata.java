@@ -33,10 +33,7 @@ import io.airlift.log.Logger;
 
 import javax.inject.Inject;
 
-import java.util.List;
-import java.util.Map;
-import java.util.Optional;
-import java.util.Set;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.facebook.presto.recordservice.Types.checkType;
@@ -76,9 +73,16 @@ public class RecordServiceMetadata implements ConnectorMetadata
   public List<ConnectorTableLayoutResult> getTableLayouts(ConnectorSession session,
       ConnectorTableHandle table, Constraint<ColumnHandle> constraint, Optional<Set<ColumnHandle>> desiredColumns)
   {
+    Set<RecordServiceColumnHandle> columns = new HashSet<>();
+    if (desiredColumns.get() != null) {
+      for (ColumnHandle col : desiredColumns.get()) {
+        RecordServiceColumnHandle rsCol = checkType(col, RecordServiceColumnHandle.class, "column");
+        columns.add(rsCol);
+      }
+    }
     RecordServiceTableHandle handle = checkType(table, RecordServiceTableHandle.class, "table");
     return ImmutableList.of(new ConnectorTableLayoutResult(
-        getTableLayout(session, new RecordServiceTableLayoutHandle(handle)), constraint.getSummary()));
+        getTableLayout(session, new RecordServiceTableLayoutHandle(handle, columns)), constraint.getSummary()));
   }
 
   @Override

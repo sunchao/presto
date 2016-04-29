@@ -15,18 +15,13 @@ package com.facebook.presto.recordservice;
 
 import com.cloudera.recordservice.core.NetworkAddress;
 import com.cloudera.recordservice.core.PlanRequestResult;
-import com.cloudera.recordservice.core.RecordServiceException;
 import com.cloudera.recordservice.core.Request;
-import com.cloudera.recordservice.core.Task;
 import com.facebook.presto.spi.*;
 import com.facebook.presto.spi.connector.ConnectorSplitManager;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
-import com.google.common.collect.ImmutableList;
 
 import io.airlift.log.Logger;
 
-import java.io.IOException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -56,9 +51,9 @@ public class RecordServiceSplitManager implements ConnectorSplitManager
   {
     RecordServiceTableLayoutHandle layoutHandle = checkType(layout,
         RecordServiceTableLayoutHandle.class, "layout");
-    log.info("getSplits for " + layoutHandle.getTable().getSchemaTableName().toString());
+    log.info("getSplits for " + layoutHandle.toString());
 
-    Request request = Request.createTableScanRequest(layoutHandle.getTable().getSchemaTableName().toString());
+    Request request = Request.createSqlRequest(layoutHandle.toString());
 
     try {
       PlanRequestResult planRequestResult = client.getPlanResult(request);

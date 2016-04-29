@@ -16,7 +16,6 @@ package com.facebook.presto.recordservice;
 import com.cloudera.recordservice.core.RecordServiceException;
 import com.cloudera.recordservice.core.Records;
 import com.cloudera.recordservice.core.Schema;
-import com.facebook.presto.spi.ColumnMetadata;
 import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.RecordCursor;
 import com.facebook.presto.spi.type.Type;
