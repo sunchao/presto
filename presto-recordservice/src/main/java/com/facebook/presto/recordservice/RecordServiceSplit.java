@@ -33,7 +33,7 @@ public class RecordServiceSplit implements ConnectorSplit
   private final long hi;
   private final long lo;
   private final boolean resultOrdered;
-  private final List<HostAddress> localHosts;
+  private final List<HostAddress> addresses;
 
   @JsonCreator
   public RecordServiceSplit(
@@ -43,16 +43,15 @@ public class RecordServiceSplit implements ConnectorSplit
       @JsonProperty("hi") long hi,
       @JsonProperty("lo") long lo,
       @JsonProperty("resultOrdered") boolean resultOrdered,
-      @JsonProperty("hosts") List<HostAddress> hosts)
+      @JsonProperty("addresses") List<HostAddress> addresses)
   {
-
     this.connectorId = requireNonNull(connectorId, "connectorId is null");
     this.task = requireNonNull(task, "task is null");
     this.taskSize = requireNonNull(taskSize, "taskSize is null");
     this.hi = hi;
     this.lo = lo;
     this.resultOrdered = resultOrdered;
-    this.localHosts = ImmutableList.copyOf(requireNonNull(hosts, "host is null"));
+    this.addresses = ImmutableList.copyOf(requireNonNull(addresses, "addresses is null"));
   }
 
   @Override
@@ -65,7 +64,7 @@ public class RecordServiceSplit implements ConnectorSplit
   @Override
   public List<HostAddress> getAddresses()
   {
-    return localHosts;
+    return addresses;
   }
 
   @Override
@@ -77,7 +76,7 @@ public class RecordServiceSplit implements ConnectorSplit
         .put("hi", hi)
         .put("lo", lo)
         .put("resultOrdered", resultOrdered)
-        .put("localHosts", localHosts)
+        .put("addresses", addresses)
         .build();
   }
 
