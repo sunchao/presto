@@ -59,7 +59,7 @@ public class RecordServiceUtil
       case TIMESTAMP_NANOS:
         return TimestampType.TIMESTAMP;
       case DECIMAL:
-        return DecimalType.createDecimalType(typeDesc.precision, typeDesc.len);
+        return DecimalType.createDecimalType(typeDesc.precision, typeDesc.scale);
       default:
         throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR,
             "Unsupported RecordService type " + typeDesc.typeId.name());

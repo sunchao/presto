@@ -18,13 +18,18 @@ import com.cloudera.recordservice.core.Records;
 import com.cloudera.recordservice.core.Schema;
 import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.RecordCursor;
+import com.facebook.presto.spi.type.DecimalType;
+import com.facebook.presto.spi.type.Decimals;
 import com.facebook.presto.spi.type.Type;
 import io.airlift.log.Logger;
 import io.airlift.slice.Slice;
 import io.airlift.slice.Slices;
 
 import java.io.IOException;
+import java.math.BigDecimal;
+import java.text.SimpleDateFormat;
 import java.util.List;
+import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 public class RecordServiceRecordCursor implements RecordCursor
@@ -130,8 +135,18 @@ public class RecordServiceRecordCursor implements RecordCursor
               // TODO: avoid creating string?
               sliceVals[i] = Slices.utf8Slice(nextRecord.nextByteArray(i).toString());
               break;
+            case TIMESTAMP_NANOS:
+              // TODO: fix timezone
+              longVals[i] = nextRecord.nextTimestampNanos(i).getMillisSinceEpoch();
+              break;
+            case DECIMAL:
+              // TODO: double check this
+              BigDecimal decimal = nextRecord.nextDecimal(i).toBigDecimal();
+              DecimalType decimalType = (DecimalType) getType(i);
+              decimal = decimal.setScale(decimalType.getScale(), BigDecimal.ROUND_HALF_UP);
+              sliceVals[i] = Decimals.encodeUnscaledValue(decimal.unscaledValue());
+              break;
             default:
-              // TODO: handle decimal and timestamp
               throw new PrestoException(RecordServiceErrorCode.TYPE_ERROR,
                   "Unsupported type " + columnTypes.get(i).typeId);
           }
@@ -171,7 +186,7 @@ public class RecordServiceRecordCursor implements RecordCursor
   @Override
   public Object getObject(int field)
   {
-    throw new UnsupportedOperationException();
+    throw new UnsupportedOperationException("getObject is not supported");
   }
 
   @Override
