@@ -17,18 +17,18 @@ import com.facebook.presto.spi.ConnectorTableLayoutHandle;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
 
-import java.util.Set;
+import java.util.List;
 
 import static java.util.Objects.requireNonNull;
 
 public class RecordServiceTableLayoutHandle implements ConnectorTableLayoutHandle
 {
   private final RecordServiceTableHandle table;
-  private final Set<RecordServiceColumnHandle> columns;
+  private final List<RecordServiceColumnHandle> columns;
 
   @JsonCreator
   public RecordServiceTableLayoutHandle(@JsonProperty("table") RecordServiceTableHandle table,
-      @JsonProperty("columns") Set<RecordServiceColumnHandle> columns)
+      @JsonProperty("columns") List<RecordServiceColumnHandle> columns)
   {
     this.table = requireNonNull(table, "table is null");
     this.columns = columns;
@@ -41,13 +41,13 @@ public class RecordServiceTableLayoutHandle implements ConnectorTableLayoutHandl
   }
 
   @JsonProperty
-  public Set<RecordServiceColumnHandle> getColumns()
+  public List<RecordServiceColumnHandle> getColumns()
   {
     return columns;
   }
 
-  @Override
-  public String toString()
+  @JsonProperty
+  public String getQuery()
   {
     StringBuilder sb = new StringBuilder();
     sb.append("select ");
@@ -63,5 +63,11 @@ public class RecordServiceTableLayoutHandle implements ConnectorTableLayoutHandl
     sb.append(" from ");
     sb.append(table.getSchemaTableName());
     return sb.toString();
+  }
+
+  @Override
+  public String toString()
+  {
+    return table.toString();
   }
 }

@@ -51,9 +51,9 @@ public class RecordServiceSplitManager implements ConnectorSplitManager
   {
     RecordServiceTableLayoutHandle layoutHandle = checkType(layout,
         RecordServiceTableLayoutHandle.class, "layout");
-    log.info("getSplits for " + layoutHandle.toString());
+    log.info("getSplits for " + layoutHandle.getQuery());
 
-    Request request = Request.createSqlRequest(layoutHandle.toString());
+    Request request = Request.createSqlRequest(layoutHandle.getQuery());
 
     try {
       PlanRequestResult planRequestResult = client.getPlanResult(request);

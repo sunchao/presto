@@ -73,7 +73,7 @@ public class RecordServiceMetadata implements ConnectorMetadata
   public List<ConnectorTableLayoutResult> getTableLayouts(ConnectorSession session,
       ConnectorTableHandle table, Constraint<ColumnHandle> constraint, Optional<Set<ColumnHandle>> desiredColumns)
   {
-    Set<RecordServiceColumnHandle> columns = new HashSet<>();
+    List<RecordServiceColumnHandle> columns = new LinkedList<>();
     if (desiredColumns.get() != null) {
       for (ColumnHandle col : desiredColumns.get()) {
         RecordServiceColumnHandle rsCol = checkType(col, RecordServiceColumnHandle.class, "column");
