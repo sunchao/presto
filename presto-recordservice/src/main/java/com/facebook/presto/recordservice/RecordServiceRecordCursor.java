@@ -17,13 +17,15 @@ import com.cloudera.recordservice.core.RecordServiceException;
 import com.cloudera.recordservice.core.Records;
 import com.facebook.presto.spi.RecordCursor;
 import com.facebook.presto.spi.type.Type;
+import io.airlift.log.Logger;
 import io.airlift.slice.Slice;
 
 import java.io.IOException;
 
 public class RecordServiceRecordCursor implements RecordCursor
 {
-  private Records records;
+  private static final Logger log = Logger.get(RecordServiceSplitManager.class);
+  private final Records records;
 
   public RecordServiceRecordCursor(Records records)
   {
@@ -41,10 +43,12 @@ public class RecordServiceRecordCursor implements RecordCursor
   {
     try {
       return records.getStatus().stats.bytesRead;
-    } catch (IOException e) {
-      e.printStackTrace();
-    } catch (RecordServiceException e) {
-      e.printStackTrace();
+    }
+    catch (IOException e) {
+      log.error("Failed to getCompletedBytes.", e);
+    }
+    catch (RecordServiceException e) {
+      log.error("Failed to getCompletedBytes.", e);
     }
     throw new RuntimeException("Failed to getCompletedBytes");
   }
@@ -54,10 +58,12 @@ public class RecordServiceRecordCursor implements RecordCursor
   {
     try {
       return records.getStatus().stats.clientTimeMs;
-    } catch (IOException e) {
-      e.printStackTrace();
-    } catch (RecordServiceException e) {
-      e.printStackTrace();
+    }
+    catch (IOException e) {
+      log.error("Failed to getReadTimeNanos.", e);
+    }
+    catch (RecordServiceException e) {
+      log.error("Failed to getReadTimeNanos.", e);
     }
     throw new RuntimeException("Failed to getReadTimeNanos");
   }
@@ -73,10 +79,12 @@ public class RecordServiceRecordCursor implements RecordCursor
   {
     try {
       return records.hasNext();
-    } catch (IOException e) {
-      e.printStackTrace();
-    } catch (RecordServiceException e) {
-      e.printStackTrace();
+    }
+    catch (IOException e) {
+      log.error("Failed to advanceNextPosition.", e);
+    }
+    catch (RecordServiceException e) {
+      log.error("Failed to advanceNextPosition.", e);
     }
     return false;
   }
@@ -86,10 +94,11 @@ public class RecordServiceRecordCursor implements RecordCursor
   {
     try {
       return records.next().nextBoolean(field);
-    } catch (IOException e) {
-      e.printStackTrace();
     }
-    throw new RuntimeException("Failed to getCompletedBytes");
+    catch (IOException e) {
+      log.error("Failed to getBoolean.", e);
+    }
+    throw new RuntimeException("Failed to getBoolean.");
   }
 
   @Override
@@ -97,10 +106,11 @@ public class RecordServiceRecordCursor implements RecordCursor
   {
     try {
       return records.next().nextLong(field);
-    } catch (IOException e) {
-      e.printStackTrace();
     }
-    throw new RuntimeException("Failed to getLong");
+    catch (IOException e) {
+      log.error("Failed to getLong.", e);
+    }
+    throw new RuntimeException("Failed to getLong.");
   }
 
   @Override
@@ -108,10 +118,11 @@ public class RecordServiceRecordCursor implements RecordCursor
   {
     try {
       return records.next().nextDouble(field);
-    } catch (IOException e) {
-      e.printStackTrace();
     }
-    throw new RuntimeException("Failed to getDouble");
+    catch (IOException e) {
+      log.error("Failed to getDouble.", e);
+    }
+    throw new RuntimeException("Failed to getDouble.");
   }
 
   @Override

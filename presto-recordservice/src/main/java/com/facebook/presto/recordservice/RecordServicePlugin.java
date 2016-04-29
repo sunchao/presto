@@ -19,6 +19,7 @@ import com.facebook.presto.spi.connector.ConnectorFactory;
 import com.facebook.presto.spi.type.TypeManager;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
+import io.airlift.log.Logger;
 
 import java.util.List;
 import java.util.Map;
@@ -32,6 +33,7 @@ import static java.util.Objects.requireNonNull;
  */
 public class RecordServicePlugin implements Plugin
 {
+  private static final Logger log = Logger.get(RecordServicePlugin.class);
   private TypeManager typeManager;
   private NodeManager nodeManager;
   private Map<String, String> optionalConfig = ImmutableMap.of();
@@ -58,8 +60,10 @@ public class RecordServicePlugin implements Plugin
   public <T> List<T> getServices(Class<T> type)
   {
     if (type == ConnectorFactory.class) {
+      log.info("RecordServicePlugin GetServices()");
       return ImmutableList.of(type.cast(new RecordServiceConnectorFactory(typeManager, nodeManager, optionalConfig)));
     }
+
     return ImmutableList.of();
   }
 }

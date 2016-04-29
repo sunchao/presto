@@ -33,13 +33,14 @@ public class RecordServiceClient {
   private static final Logger log = Logger.get(RecordServiceClient.class);
 
   public static PlanRequestResult getPlanResult(RecordServiceConnectorConfig config,
-      Request request) throws IOException, RecordServiceException {
+      Request request) throws IOException, RecordServiceException
+  {
     Set<HostAddress> planners = config.getPlanners();
     List<HostAddress> plannerList = new ArrayList<>(planners);
     Collections.shuffle(plannerList);
     String plannerHost = plannerList.get(0).getHostText();
     int port = plannerList.get(0).getPort();
-    log.debug("Get planResult from " + plannerList.get(0).toString());
+    log.info("Get planResult from " + plannerList.get(0).toString());
 
     return new RecordServicePlannerClient.Builder().planRequest(plannerHost, port, request);
   }
@@ -49,7 +50,8 @@ public class RecordServiceClient {
     String localHost = null;
     try {
       localHost = InetAddress.getLocalHost().getHostName();
-    } catch (UnknownHostException e) {
+    }
+    catch (UnknownHostException e) {
       log.error("Failed to get the local host.", e);
     }
 
@@ -63,6 +65,7 @@ public class RecordServiceClient {
 
     // 2. Otherwise, randomly pick a node.
     Collections.shuffle(addresses);
+
     return addresses.get(0);
   }
 }

@@ -27,8 +27,10 @@ import static java.util.Objects.requireNonNull;
 
 import io.airlift.bootstrap.Bootstrap;
 import io.airlift.json.JsonModule;
+import io.airlift.log.Logger;
 
 public class RecordServiceConnectorFactory implements ConnectorFactory {
+  private static final Logger log = Logger.get(RecordServiceConnectorFactory.class);
   private final TypeManager typeManager;
   private final NodeManager nodeManager;
   private final Map<String, String> optionalConfig;
@@ -57,6 +59,7 @@ public class RecordServiceConnectorFactory implements ConnectorFactory {
   public Connector create(String connectorId, Map<String, String> config) {
     requireNonNull(connectorId, "connectorId is null");
     requireNonNull(config, "config is null");
+    log.info("Start to create a RecordServiceConnector");
 
     try {
       Bootstrap app = new Bootstrap(
@@ -73,6 +76,7 @@ public class RecordServiceConnectorFactory implements ConnectorFactory {
       return injector.getInstance(RecordServiceConnector.class);
     }
     catch(Exception e) {
+      log.error("Failed to create a RecordServiceConnector.", e);
       throw Throwables.propagate(e);
     }
   }

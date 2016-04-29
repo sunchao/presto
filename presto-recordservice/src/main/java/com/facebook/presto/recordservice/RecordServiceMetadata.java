@@ -28,6 +28,7 @@ import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.SchemaTableName;
 import com.facebook.presto.spi.SchemaTablePrefix;
 import com.facebook.presto.spi.connector.ConnectorMetadata;
+import io.airlift.log.Logger;
 
 import javax.inject.Inject;
 
@@ -42,7 +43,9 @@ import static java.util.Objects.requireNonNull;
 
 public class RecordServiceMetadata implements ConnectorMetadata
 {
+  private static final Logger log = Logger.get(RecordServiceMetadata.class);
   private final String connectorId;
+  // TODO: close plannerClient ?
   private final RecordServicePlannerClient plannerClient;
 
   @Inject
@@ -61,9 +64,11 @@ public class RecordServiceMetadata implements ConnectorMetadata
       return plannerClient.getDatabases();
     }
     catch (IOException e) {
+      log.error("Failed to listSchemaNames.", e);
       throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR, e);
     }
     catch (RecordServiceException e) {
+      log.error("Failed to listSchemaNames.", e);
       throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR, e);
     }
   }
@@ -105,9 +110,11 @@ public class RecordServiceMetadata implements ConnectorMetadata
           .collect(Collectors.toList());
     }
     catch (IOException e) {
+      log.error("Failed to listTables.", e);
       throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR, e);
     }
     catch (RecordServiceException e) {
+      log.error("Failed to listTables.", e);
       throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR, e);
     }
   }

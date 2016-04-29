@@ -20,7 +20,6 @@ import com.facebook.presto.spi.HostAddress;
 import com.facebook.presto.spi.RecordCursor;
 import com.facebook.presto.spi.RecordSet;
 import com.facebook.presto.spi.type.Type;
-import com.google.common.io.ByteSource;
 import io.airlift.log.Logger;
 
 import java.io.Closeable;
@@ -30,8 +29,6 @@ import java.util.List;
 public class RecordServiceRecordSet implements RecordSet, Closeable
 {
   private static final Logger log = Logger.get(RecordServiceRecordSet.class);
-//  private final List<Type> columnTypes;
-//  private final ByteSource byteSource;
   private RecordServiceWorkerClient workerClient = null;
   private Records records = null;
 
@@ -46,11 +43,14 @@ public class RecordServiceRecordSet implements RecordSet, Closeable
           new RecordServiceWorkerClient.Builder().connect(host.getHostText(), host.getPort());
       records = workerClient.execAndFetch(split.getTask());
       records.setCloseWorker(true);
-    } catch (RecordServiceException e) {
+    }
+    catch (RecordServiceException e) {
       log.error("Failed to fetch records.", e);
-    } catch (IOException e) {
+    }
+    catch (IOException e) {
       log.error("Failed to fetch records.", e);
-    } finally {
+    }
+    finally {
       if (records == null && workerClient != null) {
         workerClient.close();
       }

@@ -17,11 +17,13 @@ import com.facebook.presto.spi.ColumnHandle;
 import com.facebook.presto.spi.type.Type;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import io.airlift.log.Logger;
 
 import static java.util.Objects.requireNonNull;
 
 public class RecordServiceColumnHandle implements ColumnHandle
 {
+  private static final Logger log = Logger.get(RecordServiceColumnHandle.class);
   private final String connectorId;
   private final String name;
   private final Type type;
