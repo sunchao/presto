@@ -106,6 +106,10 @@ public class RecordServiceRecordCursor implements RecordCursor
         nextRecord = records.next();
         for (int i = 0; i < columnTypes.size(); ++i)
         {
+          if (isNull(i)) {
+            continue;
+          }
+
           switch (columnTypes.get(i).typeId)
           {
             case BOOLEAN:
