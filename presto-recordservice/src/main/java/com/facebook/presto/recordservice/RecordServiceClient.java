@@ -17,6 +17,7 @@ import com.cloudera.recordservice.core.PlanRequestResult;
 import com.cloudera.recordservice.core.RecordServiceException;
 import com.cloudera.recordservice.core.RecordServicePlannerClient;
 import com.cloudera.recordservice.core.Request;
+import com.cloudera.recordservice.core.Schema;
 import com.facebook.presto.spi.HostAddress;
 import com.facebook.presto.spi.PrestoException;
 
@@ -47,6 +48,15 @@ public class RecordServiceClient {
   {
     try {
       return new RecordServicePlannerClient.Builder().getTables("172.21.2.110", 12050, "tpch");
+    } catch (Exception e) {
+      throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR, e);
+    }
+  }
+
+  public static Schema getSchema(String db, String table) {
+    try {
+      Request request = Request.createTableScanRequest(db + "." + table);
+      return new RecordServicePlannerClient.Builder().getSchema("172.21.2.110", 12050, request).schema;
     } catch (Exception e) {
       throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR, e);
     }
