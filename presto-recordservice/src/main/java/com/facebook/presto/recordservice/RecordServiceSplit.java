@@ -17,6 +17,7 @@ import com.facebook.presto.spi.ConnectorSplit;
 import com.facebook.presto.spi.HostAddress;
 import com.fasterxml.jackson.annotation.JsonCreator;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableMap;
 
@@ -34,6 +35,12 @@ public class RecordServiceSplit implements ConnectorSplit
   private final long lo;
   private final boolean resultOrdered;
   private final List<HostAddress> addresses;
+  private final List<HostAddress> globalAddresses;
+
+  // Parts for DelegationToken. If no delegation token, these are all null.
+  private final String identifier;
+  private final String password;
+  private final byte[] token;
 
   @JsonCreator
   public RecordServiceSplit(
@@ -43,7 +50,11 @@ public class RecordServiceSplit implements ConnectorSplit
       @JsonProperty("hi") long hi,
       @JsonProperty("lo") long lo,
       @JsonProperty("resultOrdered") boolean resultOrdered,
-      @JsonProperty("addresses") List<HostAddress> addresses)
+      @JsonProperty("addresses") List<HostAddress> addresses,
+      @JsonProperty("globalAddresses") List<HostAddress> globalAddresses,
+      @JsonProperty("identifier") String identifier,
+      @JsonProperty("password") String password,
+      @JsonProperty("token") byte[] token)
   {
     this.connectorId = requireNonNull(connectorId, "connectorId is null");
     this.task = requireNonNull(task, "task is null");
@@ -52,6 +63,12 @@ public class RecordServiceSplit implements ConnectorSplit
     this.lo = lo;
     this.resultOrdered = resultOrdered;
     this.addresses = ImmutableList.copyOf(requireNonNull(addresses, "addresses is null"));
+    this.globalAddresses = ImmutableList.copyOf(requireNonNull(globalAddresses, "globalAddresses is null"));
+
+    // These are nullable
+    this.identifier = identifier;
+    this.password = password;
+    this.token = token;
   }
 
   @Override
@@ -125,5 +142,29 @@ public class RecordServiceSplit implements ConnectorSplit
   public boolean getResultOrdered()
   {
     return resultOrdered;
+  }
+
+  @JsonProperty
+  public List<HostAddress> getGlobalAddresses()
+  {
+    return globalAddresses;
+  }
+
+  @JsonProperty
+  public String getIdentifier()
+  {
+    return identifier;
+  }
+
+  @JsonProperty
+  public String getPassword()
+  {
+    return password;
+  }
+
+  @JsonProperty
+  public byte[] getToken()
+  {
+    return token;
   }
 }

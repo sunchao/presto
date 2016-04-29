@@ -13,6 +13,7 @@
  */
 package com.facebook.presto.recordservice;
 
+import com.cloudera.recordservice.core.DelegationToken;
 import com.cloudera.recordservice.core.NetworkAddress;
 import com.cloudera.recordservice.core.PlanRequestResult;
 import com.cloudera.recordservice.core.Request;
@@ -56,11 +57,17 @@ public class RecordServiceSplitManager implements ConnectorSplitManager
     Request request = Request.createSqlRequest(layoutHandle.getQuery());
 
     try {
-      PlanRequestResult planRequestResult = client.getPlanResult(request);
+      RecordServicePlanResult planResult = client.getPlanResult(request);
+      PlanRequestResult planRequestResult = planResult.planRequestResult;
+      DelegationToken delegationToken = planResult.delegationToken;
       List<ConnectorSplit> splits = planRequestResult.tasks.stream()
           .map(t -> new RecordServiceSplit(
               connectorId, t.task, t.taskSize, t.taskId.hi,
-              t.taskId.lo, t.resultsOrdered, toHostAddress(planRequestResult.hosts)))
+              t.taskId.lo, t.resultsOrdered, toHostAddress(t.localHosts),
+              toHostAddress(planRequestResult.hosts),
+              delegationToken == null ? null : delegationToken.identifier,
+              delegationToken == null ? null : delegationToken.password,
+              delegationToken == null ? null : delegationToken.token))
           .collect(Collectors.toList());
       Collections.shuffle(splits);
 

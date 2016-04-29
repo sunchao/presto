@@ -13,8 +13,8 @@
  */
 package com.facebook.presto.recordservice;
 
+import com.cloudera.recordservice.core.DelegationToken;
 import com.cloudera.recordservice.core.PlanRequestResult;
-import com.cloudera.recordservice.core.RecordServiceException;
 import com.cloudera.recordservice.core.RecordServicePlannerClient;
 import com.cloudera.recordservice.core.Request;
 import com.cloudera.recordservice.core.Schema;
@@ -23,13 +23,11 @@ import com.facebook.presto.spi.PrestoException;
 
 import io.airlift.log.Logger;
 
-import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
+import java.util.Random;
 
 import javax.inject.Inject;
 
@@ -49,8 +47,7 @@ public class RecordServiceClient {
   {
     try {
       HostAddress plannerAddr = getPlannerHostAddress();
-      return new RecordServicePlannerClient.Builder()
-          .getDatabases(plannerAddr.getHostText(), plannerAddr.getPort());
+      return getPlannerBuilder().getDatabases(plannerAddr.getHostText(), plannerAddr.getPort());
     } catch (Exception e) {
       throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR, e);
     }
@@ -60,7 +57,7 @@ public class RecordServiceClient {
   {
     try {
       HostAddress plannerAddr = getPlannerHostAddress();
-      return new RecordServicePlannerClient.Builder()
+      return getPlannerBuilder()
           .getTables(plannerAddr.getHostText(), plannerAddr.getPort(), db);
     } catch (Exception e) {
       throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR, e);
@@ -71,18 +68,78 @@ public class RecordServiceClient {
     try {
       HostAddress plannerAddr = getPlannerHostAddress();
       Request request = Request.createTableScanRequest(db + "." + table);
-      return new RecordServicePlannerClient.Builder()
+      return getPlannerBuilder()
           .getSchema(plannerAddr.getHostText(), plannerAddr.getPort(), request).schema;
     } catch (Exception e) {
-      throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR, e);
+      throw new PrestoException(RecordServiceErrorCode.PLAN_ERROR, e);
     }
   }
 
-  public PlanRequestResult getPlanResult(Request request) throws IOException, RecordServiceException
+  public RecordServicePlanResult getPlanResult(Request request)
   {
-    HostAddress plannerAddr = getPlannerHostAddress();
-    LOG.info("Get planResult from " + plannerAddr);
-    return new RecordServicePlannerClient.Builder().planRequest(plannerAddr.getHostText(), plannerAddr.getPort(), request);
+    RecordServicePlannerClient plannerClient = null;
+    try {
+      HostAddress plannerAddr = getPlannerHostAddress();
+      LOG.info("Get planResult from " + plannerAddr);
+      RecordServicePlannerClient.Builder builder = getPlannerBuilder();
+      plannerClient = builder.connect(plannerAddr.getHostText(), plannerAddr.getPort());
+      PlanRequestResult planRequestResult = plannerClient.planRequest(request);
+      DelegationToken delegationToken = null;
+      if (plannerClient.isKerberosAuthenticated()) {
+         delegationToken = plannerClient.getDelegationToken("");
+      }
+      return new RecordServicePlanResult(planRequestResult, delegationToken);
+    } catch (Exception e) {
+      throw new PrestoException(RecordServiceErrorCode.PLAN_ERROR, e);
+    } finally {
+      if (plannerClient != null) {
+        plannerClient.close();
+      }
+    }
+  }
+
+  public static HostAddress getWorkerHostAddress(List<HostAddress> addresses, List<HostAddress> globalAddresses)
+  {
+    String localHost;
+    try {
+      localHost = InetAddress.getLocalHost().getHostName();
+    }
+    catch (UnknownHostException e) {
+      throw new PrestoException(RecordServiceErrorCode.TASK_ERROR, "Failed to get the local host.", e);
+    }
+
+    HostAddress address = null;
+
+    // 1. If the data is available on this node, schedule the task locally.
+    for (HostAddress add : addresses) {
+      if (localHost.equals(add.getHostText())) {
+        LOG.info("Both data and RecordServiceWorker are available locally for task.");
+        address = add;
+        break;
+      }
+    }
+
+    // 2. Check if there's a RecordServiceWorker running locally. If so, pick that node.
+    if (address == null) {
+      for (HostAddress loc : globalAddresses) {
+        if (localHost.equals(loc.getHostText())) {
+          address = loc;
+          LOG.info("RecordServiceWorker is available locally for task");
+          break;
+        }
+      }
+    }
+
+    // 3. Finally, we don't have RecordServiceWorker running locally. Randomly pick
+    // a node from the global membership.
+    if (address == null) {
+      Random rand = new Random();
+      address = globalAddresses.get(rand.nextInt(globalAddresses.size()));
+      LOG.info("Neither RecordServiceWorker nor data is available locally for task {}." +
+          " Randomly selected host {} to execute it", address);
+    }
+
+    return address;
   }
 
   private HostAddress getPlannerHostAddress()
@@ -90,27 +147,12 @@ public class RecordServiceClient {
     return config.getPlanners().iterator().next();
   }
 
-  public static HostAddress getWorkerHostAddress(List<HostAddress> addresses)
+  private RecordServicePlannerClient.Builder getPlannerBuilder()
   {
-    String localHost = null;
-    try {
-      localHost = InetAddress.getLocalHost().getHostName();
+    RecordServicePlannerClient.Builder result = new RecordServicePlannerClient.Builder();
+    if (config.getKerberosPrincipal() != null) {
+      result.setKerberosPrincipal(config.getKerberosPrincipal());
     }
-    catch (UnknownHostException e) {
-      LOG.error("Failed to get the local host.", e);
-    }
-
-    // 1. If the data is available on this node, schedule the task locally.
-    for (HostAddress add : addresses) {
-      if (localHost.equals(add.getHostText())) {
-        LOG.info("Both data and RecordServiceWorker are available locally for task.");
-        return add;
-      }
-    }
-
-    // 2. Otherwise, randomly pick a node.
-    Collections.shuffle(addresses);
-
-    return addresses.get(0);
+    return result;
   }
 }

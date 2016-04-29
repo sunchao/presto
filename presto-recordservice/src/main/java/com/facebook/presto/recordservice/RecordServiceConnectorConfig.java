@@ -32,6 +32,7 @@ public class RecordServiceConnectorConfig {
    * RecordService planner host
    */
   private Set<HostAddress> planners = ImmutableSet.of();
+  private String kerberosPrincipal = null;
 
   @Size(min = 1)
   public Set<HostAddress> getPlanners()
@@ -39,10 +40,22 @@ public class RecordServiceConnectorConfig {
     return planners;
   }
 
+  public String getKerberosPrincipal()
+  {
+    return kerberosPrincipal;
+  }
+
   @Config("recordservice.planner.hostports")
   public RecordServiceConnectorConfig setPlanners(String plannerHostPorts)
   {
     this.planners = (plannerHostPorts == null) ? null : parsePlannerHostPorts(plannerHostPorts);
+    return this;
+  }
+
+  @Config("recordservice.kerberos.principal")
+  public RecordServiceConnectorConfig setKerberosPrincipal(String kerberosPrincipal)
+  {
+    this.kerberosPrincipal = kerberosPrincipal;
     return this;
   }
 

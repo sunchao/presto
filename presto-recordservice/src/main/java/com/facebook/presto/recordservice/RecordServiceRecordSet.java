@@ -13,6 +13,7 @@
  */
 package com.facebook.presto.recordservice;
 
+import com.cloudera.recordservice.core.DelegationToken;
 import com.cloudera.recordservice.core.RecordServiceException;
 import com.cloudera.recordservice.core.RecordServiceWorkerClient;
 import com.cloudera.recordservice.core.Records;
@@ -39,13 +40,20 @@ public class RecordServiceRecordSet implements RecordSet, Closeable
 
   public RecordServiceRecordSet(RecordServiceSplit split)
   {
-    HostAddress host = RecordServiceClient.getWorkerHostAddress(split.getAddresses());
+    HostAddress host = RecordServiceClient.getWorkerHostAddress(split.getAddresses(), split.getGlobalAddresses());
 
     RecordServiceWorkerClient workerClient = null;
     Records records = null;
+    DelegationToken delegationToken = null;
+    if (split.getIdentifier() != null) {
+      delegationToken = new DelegationToken(split.getIdentifier(), split.getPassword(), split.getToken());
+    }
     try {
-      workerClient =
-          new RecordServiceWorkerClient.Builder().connect(host.getHostText(), host.getPort());
+      RecordServiceWorkerClient.Builder workerBuilder = new RecordServiceWorkerClient.Builder();
+      if (delegationToken != null) {
+        workerBuilder.setDelegationToken(delegationToken);
+      }
+      workerClient = workerBuilder.connect(host.getHostText(), host.getPort());
       records = workerClient.execAndFetch(fromSplit(split));
       records.setCloseWorker(true);
     }
