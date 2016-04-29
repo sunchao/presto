@@ -15,7 +15,6 @@ package com.facebook.presto.recordservice;
 
 import com.cloudera.recordservice.core.PlanRequestResult;
 import com.cloudera.recordservice.core.RecordServiceException;
-import com.cloudera.recordservice.core.RecordServicePlannerClient;
 import com.cloudera.recordservice.core.Request;
 import com.cloudera.recordservice.core.Task;
 import com.facebook.presto.spi.*;
@@ -27,7 +26,6 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 import static java.util.Objects.requireNonNull;
 
@@ -47,20 +45,14 @@ public class RecordServiceSplitManager implements ConnectorSplitManager
   public ConnectorSplitSource getSplits(ConnectorTransactionHandle handle,
       ConnectorSession session, ConnectorTableLayoutHandle layout)
   {
+    // TODO: get request info from layout
     Request request = null;
-    Set<HostAddress> planners = config.getPlanners();
-    List<HostAddress> plannerList = new ArrayList<>(planners);
-    Collections.shuffle(plannerList);
-    String plannerHost = plannerList.get(0).getHostText();
-    int port = plannerList.get(0).getPort();
     try {
-      PlanRequestResult planRequestResult = new RecordServicePlannerClient.Builder()
-          .planRequest(plannerHost, port, request);
+      PlanRequestResult planRequestResult = RecordServiceClient.getPlanResult(config, request);
       List<ConnectorSplit> splits = new ArrayList<>();
       for (Task task : planRequestResult.tasks) {
-        // TODO: Implement a RecordServiceSplitSource with schema info, instead of
-        // wrapping the schema in each split.
-        splits.add(new RecordServiceSplit(connectorId, task, planRequestResult.schema));
+        // TODO: is schema info required here?
+        splits.add(new RecordServiceSplit(connectorId, task, planRequestResult.hosts));
       }
       Collections.shuffle(splits);
 
@@ -68,11 +60,11 @@ public class RecordServiceSplitManager implements ConnectorSplitManager
     }
     catch (IOException e) {
       log.error("Failed to getSplits.", e);
-      return null;
     }
     catch (RecordServiceException e) {
       log.error("Failed to getSplits", e);
-      return null;
     }
+
+    return null;
   }
 }

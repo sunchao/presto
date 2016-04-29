@@ -13,12 +13,10 @@
  */
 package com.facebook.presto.recordservice;
 
-import com.facebook.presto.spi.ColumnHandle;
-import com.facebook.presto.spi.ConnectorSession;
-import com.facebook.presto.spi.ConnectorSplit;
-import com.facebook.presto.spi.RecordSet;
+import com.facebook.presto.spi.*;
 import com.facebook.presto.spi.connector.ConnectorRecordSetProvider;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
+import io.airlift.log.Logger;
 
 import java.util.List;
 
@@ -29,6 +27,7 @@ import static java.util.Objects.requireNonNull;
 public class RecordServiceRecordSetProvider implements ConnectorRecordSetProvider
 {
   private final String connectorId;
+  private static final Logger log = Logger.get(RecordServiceRecordSetProvider.class);
 
   public RecordServiceRecordSetProvider(RecordServiceConnectorId connectorId)
   {
@@ -41,8 +40,9 @@ public class RecordServiceRecordSetProvider implements ConnectorRecordSetProvide
   {
     requireNonNull(split, "split is null");
     RecordServiceSplit recordServiceSplit = checkType(split, RecordServiceSplit.class, "split");
-    checkArgument(recordServiceSplit.getConnectorId().equals(connectorId), "split is not for this connector");
-    // todo
-    return null;
+    checkArgument(recordServiceSplit.getConnectorId().equals(connectorId),
+        "split is not for this connector");
+
+    return new RecordServiceRecordSet(recordServiceSplit);
   }
 }

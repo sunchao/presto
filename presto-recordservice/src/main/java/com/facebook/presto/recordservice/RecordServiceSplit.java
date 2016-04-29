@@ -19,6 +19,7 @@ import com.cloudera.recordservice.core.Task;
 import com.facebook.presto.spi.ConnectorSplit;
 import com.facebook.presto.spi.HostAddress;
 import com.fasterxml.jackson.annotation.JsonProperty;
+import sun.nio.ch.Net;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -27,13 +28,17 @@ public class RecordServiceSplit implements ConnectorSplit
 {
   private final String connectorId;
   private final Task task;
-  private final Schema schema;
+  private final List<HostAddress> addresses;
 
-  public RecordServiceSplit(String connectorId, Task task, Schema schema)
+  public RecordServiceSplit(String connectorId, Task task, List<NetworkAddress> hosts)
   {
     this.connectorId = connectorId;
     this.task = task;
-    this.schema = schema;
+    List<HostAddress> list = new LinkedList<>();
+    for (NetworkAddress add : hosts) {
+      list.add(HostAddress.fromParts(add.hostname, add.port));
+    }
+    this.addresses = list;
   }
 
   @Override
@@ -45,11 +50,7 @@ public class RecordServiceSplit implements ConnectorSplit
   @Override
   public List<HostAddress> getAddresses()
   {
-    List<HostAddress> list = new LinkedList<>();
-    for (NetworkAddress add : task.localHosts) {
-      list.add(HostAddress.fromParts(add.hostname, add.port));
-    }
-    return list;
+    return addresses;
   }
 
   @Override
@@ -61,11 +62,6 @@ public class RecordServiceSplit implements ConnectorSplit
   public Task getTask()
   {
     return task;
-  }
-
-  public Schema getSchema()
-  {
-    return schema;
   }
 
   @JsonProperty
