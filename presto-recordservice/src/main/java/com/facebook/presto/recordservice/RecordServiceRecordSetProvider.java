@@ -13,7 +13,10 @@
  */
 package com.facebook.presto.recordservice;
 
-import com.facebook.presto.spi.*;
+import com.facebook.presto.spi.ColumnHandle;
+import com.facebook.presto.spi.ConnectorSession;
+import com.facebook.presto.spi.ConnectorSplit;
+import com.facebook.presto.spi.RecordSet;
 import com.facebook.presto.spi.connector.ConnectorRecordSetProvider;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
 import io.airlift.log.Logger;
@@ -29,7 +32,7 @@ import static java.util.Objects.requireNonNull;
 public class RecordServiceRecordSetProvider implements ConnectorRecordSetProvider
 {
   private final String connectorId;
-  private static final Logger log = Logger.get(RecordServiceRecordSetProvider.class);
+  private static final Logger LOG = Logger.get(RecordServiceRecordSetProvider.class);
 
   @Inject
   public RecordServiceRecordSetProvider(RecordServiceConnectorId connectorId)

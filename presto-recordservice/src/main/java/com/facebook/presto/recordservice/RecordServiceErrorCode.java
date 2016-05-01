@@ -18,10 +18,15 @@ import com.facebook.presto.spi.ErrorCodeSupplier;
 
 public enum RecordServiceErrorCode implements ErrorCodeSupplier
 {
+  // Error in catalog operations, such as getDbs, getTables, etc.
   CATALOG_ERROR(0),
+  // Error in request planning
   PLAN_ERROR(1),
+  // Error in executing worker tasks
   TASK_ERROR(2),
+  // Error in fetching/iterating records
   CURSOR_ERROR(3),
+  // Error in incompatible/unexpected types
   TYPE_ERROR(4);
 
   private final ErrorCode errorCode;

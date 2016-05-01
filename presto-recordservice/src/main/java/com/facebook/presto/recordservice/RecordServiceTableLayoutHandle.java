@@ -31,7 +31,7 @@ public class RecordServiceTableLayoutHandle implements ConnectorTableLayoutHandl
       @JsonProperty("columns") List<RecordServiceColumnHandle> columns)
   {
     this.table = requireNonNull(table, "table is null");
-    this.columns = columns;
+    this.columns = requireNonNull(columns, "columns is null");
   }
 
   @JsonProperty
@@ -50,7 +50,7 @@ public class RecordServiceTableLayoutHandle implements ConnectorTableLayoutHandl
   public String getQuery()
   {
     StringBuilder sb = new StringBuilder();
-    sb.append("select ");
+    sb.append("SELECT ");
     for (RecordServiceColumnHandle col : columns) {
       sb.append(col.getName());
       sb.append(",");
@@ -60,7 +60,7 @@ public class RecordServiceTableLayoutHandle implements ConnectorTableLayoutHandl
     } else {
       sb.setLength(sb.length() - 1);
     }
-    sb.append(" from ");
+    sb.append(" FROM ");
     sb.append(table.getSchemaTableName());
     return sb.toString();
   }

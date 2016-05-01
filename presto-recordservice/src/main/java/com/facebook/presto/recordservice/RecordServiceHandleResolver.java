@@ -20,24 +20,29 @@ import com.facebook.presto.spi.ConnectorTableHandle;
 import com.facebook.presto.spi.ConnectorTableLayoutHandle;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
 
-public class RecordServiceHandleResolver implements ConnectorHandleResolver {
+public class RecordServiceHandleResolver implements ConnectorHandleResolver
+{
   @Override
-  public Class<? extends ConnectorTableHandle> getTableHandleClass() {
+  public Class<? extends ConnectorTableHandle> getTableHandleClass()
+  {
     return RecordServiceTableHandle.class;
   }
 
   @Override
-  public Class<? extends ConnectorTableLayoutHandle> getTableLayoutHandleClass() {
+  public Class<? extends ConnectorTableLayoutHandle> getTableLayoutHandleClass()
+  {
     return RecordServiceTableLayoutHandle.class;
   }
 
   @Override
-  public Class<? extends ColumnHandle> getColumnHandleClass() {
+  public Class<? extends ColumnHandle> getColumnHandleClass()
+  {
     return RecordServiceColumnHandle.class;
   }
 
   @Override
-  public Class<? extends ConnectorSplit> getSplitClass() {
+  public Class<? extends ConnectorSplit> getSplitClass()
+  {
     return RecordServiceSplit.class;
   }
 

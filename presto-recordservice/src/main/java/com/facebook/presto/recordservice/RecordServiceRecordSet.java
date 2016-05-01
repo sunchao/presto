@@ -22,6 +22,7 @@ import com.cloudera.recordservice.thrift.TNetworkAddress;
 import com.cloudera.recordservice.thrift.TTask;
 import com.cloudera.recordservice.thrift.TUniqueId;
 import com.facebook.presto.spi.HostAddress;
+import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.RecordCursor;
 import com.facebook.presto.spi.RecordSet;
 import com.facebook.presto.spi.type.Type;
@@ -34,7 +35,7 @@ import java.util.stream.Collectors;
 
 public class RecordServiceRecordSet implements RecordSet, Closeable
 {
-  private static final Logger log = Logger.get(RecordServiceRecordSet.class);
+  private static final Logger LOG = Logger.get(RecordServiceRecordSet.class);
   private RecordServiceWorkerClient workerClient = null;
   private Records records = null;
 
@@ -57,11 +58,9 @@ public class RecordServiceRecordSet implements RecordSet, Closeable
       records = workerClient.execAndFetch(fromSplit(split));
       records.setCloseWorker(true);
     }
-    catch (RecordServiceException e) {
-      log.error("Failed to fetch records.", e);
-    }
-    catch (IOException e) {
-      log.error("Failed to fetch records.", e);
+    catch (IOException | RecordServiceException e) {
+      throw new PrestoException(RecordServiceErrorCode.TASK_ERROR,
+          "Failed to fetch records.", e);
     }
     finally {
       if (records == null && workerClient != null) {

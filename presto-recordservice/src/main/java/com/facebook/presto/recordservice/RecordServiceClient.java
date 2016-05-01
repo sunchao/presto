@@ -15,6 +15,7 @@ package com.facebook.presto.recordservice;
 
 import com.cloudera.recordservice.core.DelegationToken;
 import com.cloudera.recordservice.core.PlanRequestResult;
+import com.cloudera.recordservice.core.RecordServiceException;
 import com.cloudera.recordservice.core.RecordServicePlannerClient;
 import com.cloudera.recordservice.core.Request;
 import com.cloudera.recordservice.core.Schema;
@@ -23,9 +24,9 @@ import com.facebook.presto.spi.PrestoException;
 
 import io.airlift.log.Logger;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.UnknownHostException;
-import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 
@@ -48,8 +49,8 @@ public class RecordServiceClient {
     try {
       HostAddress plannerAddr = getPlannerHostAddress();
       return getPlannerBuilder().getDatabases(plannerAddr.getHostText(), plannerAddr.getPort());
-    } catch (Exception e) {
-      throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR, e);
+    } catch (IOException | RecordServiceException e) {
+      throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR, "Failed at getDatabases", e);
     }
   }
 
@@ -59,8 +60,8 @@ public class RecordServiceClient {
       HostAddress plannerAddr = getPlannerHostAddress();
       return getPlannerBuilder()
           .getTables(plannerAddr.getHostText(), plannerAddr.getPort(), db);
-    } catch (Exception e) {
-      throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR, e);
+    } catch (IOException | RecordServiceException e) {
+      throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR, "Failed at getTables", e);
     }
   }
 
@@ -70,8 +71,8 @@ public class RecordServiceClient {
       Request request = Request.createTableScanRequest(db + "." + table);
       return getPlannerBuilder()
           .getSchema(plannerAddr.getHostText(), plannerAddr.getPort(), request).schema;
-    } catch (Exception e) {
-      throw new PrestoException(RecordServiceErrorCode.PLAN_ERROR, e);
+    } catch (IOException | RecordServiceException e) {
+      throw new PrestoException(RecordServiceErrorCode.PLAN_ERROR, "Failed at getSchema", e);
     }
   }
 
@@ -80,7 +81,7 @@ public class RecordServiceClient {
     RecordServicePlannerClient plannerClient = null;
     try {
       HostAddress plannerAddr = getPlannerHostAddress();
-      LOG.info("Get planResult from " + plannerAddr);
+      LOG.info("Get planResult from: " + plannerAddr);
       RecordServicePlannerClient.Builder builder = getPlannerBuilder();
       plannerClient = builder.connect(plannerAddr.getHostText(), plannerAddr.getPort());
       PlanRequestResult planRequestResult = plannerClient.planRequest(request);
@@ -89,8 +90,8 @@ public class RecordServiceClient {
          delegationToken = plannerClient.getDelegationToken("");
       }
       return new RecordServicePlanResult(planRequestResult, delegationToken);
-    } catch (Exception e) {
-      throw new PrestoException(RecordServiceErrorCode.PLAN_ERROR, e);
+    } catch (IOException | RecordServiceException e) {
+      throw new PrestoException(RecordServiceErrorCode.PLAN_ERROR, "Failed at planRequest", e);
     } finally {
       if (plannerClient != null) {
         plannerClient.close();
@@ -144,6 +145,7 @@ public class RecordServiceClient {
 
   private HostAddress getPlannerHostAddress()
   {
+    // size is checked in getPlanners() call
     return config.getPlanners().iterator().next();
   }
 

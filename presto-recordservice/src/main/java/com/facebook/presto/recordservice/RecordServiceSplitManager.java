@@ -17,7 +17,13 @@ import com.cloudera.recordservice.core.DelegationToken;
 import com.cloudera.recordservice.core.NetworkAddress;
 import com.cloudera.recordservice.core.PlanRequestResult;
 import com.cloudera.recordservice.core.Request;
-import com.facebook.presto.spi.*;
+import com.facebook.presto.spi.ConnectorSession;
+import com.facebook.presto.spi.ConnectorSplit;
+import com.facebook.presto.spi.ConnectorSplitSource;
+import com.facebook.presto.spi.ConnectorTableLayoutHandle;
+import com.facebook.presto.spi.FixedSplitSource;
+import com.facebook.presto.spi.HostAddress;
+import com.facebook.presto.spi.PrestoException;
 import com.facebook.presto.spi.connector.ConnectorSplitManager;
 import com.facebook.presto.spi.connector.ConnectorTransactionHandle;
 
@@ -35,7 +41,7 @@ import static java.util.Objects.requireNonNull;
 public class RecordServiceSplitManager implements ConnectorSplitManager
 {
   private final String connectorId;
-  private static final Logger log = Logger.get(RecordServiceSplitManager.class);
+  private static final Logger LOG = Logger.get(RecordServiceSplitManager.class);
   private final RecordServiceClient client;
 
   @Inject
@@ -52,7 +58,7 @@ public class RecordServiceSplitManager implements ConnectorSplitManager
   {
     RecordServiceTableLayoutHandle layoutHandle = checkType(layout,
         RecordServiceTableLayoutHandle.class, "layout");
-    log.info("getSplits for " + layoutHandle.getQuery());
+    LOG.info("getSplits for query: " + layoutHandle.getQuery());
 
     Request request = Request.createSqlRequest(layoutHandle.getQuery());
 

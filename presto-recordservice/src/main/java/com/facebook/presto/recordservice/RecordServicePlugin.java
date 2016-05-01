@@ -33,7 +33,7 @@ import static java.util.Objects.requireNonNull;
  */
 public class RecordServicePlugin implements Plugin
 {
-  private static final Logger log = Logger.get(RecordServicePlugin.class);
+  private static final Logger LOG = Logger.get(RecordServicePlugin.class);
   private TypeManager typeManager;
   private NodeManager nodeManager;
   private Map<String, String> optionalConfig = ImmutableMap.of();
@@ -60,7 +60,7 @@ public class RecordServicePlugin implements Plugin
   public <T> List<T> getServices(Class<T> type)
   {
     if (type == ConnectorFactory.class) {
-      log.info("RecordServicePlugin GetServices()");
+      LOG.info("RecordServicePlugin GetServices()");
       return ImmutableList.of(type.cast(new RecordServiceConnectorFactory(typeManager, nodeManager, optionalConfig)));
     }
 

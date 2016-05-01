@@ -29,7 +29,7 @@ import static java.util.Objects.requireNonNull;
 
 public class RecordServiceConnector implements Connector
 {
-  private static final Logger log = Logger.get(RecordServiceConnector.class);
+  private static final Logger LOG = Logger.get(RecordServiceConnector.class);
 
   private final LifeCycleManager lifeCycleManager;
   private final RecordServiceMetadata metadata;
@@ -78,7 +78,7 @@ public class RecordServiceConnector implements Connector
       lifeCycleManager.stop();
     }
     catch (Exception e) {
-      log.error(e, "Error shutting down RecordService connector");
+      LOG.error(e, "Error shutting down RecordService connector");
     }
   }
 }

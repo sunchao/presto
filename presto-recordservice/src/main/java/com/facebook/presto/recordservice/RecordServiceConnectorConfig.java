@@ -59,6 +59,8 @@ public class RecordServiceConnectorConfig {
     return this;
   }
 
+  // TODO: more configs
+
   public static ImmutableSet<HostAddress> parsePlannerHostPorts(String plannerHostPorts)
   {
     Splitter splitter = Splitter.on(',').omitEmptyStrings().trimResults();

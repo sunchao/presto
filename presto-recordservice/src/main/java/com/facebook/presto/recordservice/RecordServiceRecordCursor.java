@@ -27,14 +27,12 @@ import io.airlift.slice.Slices;
 
 import java.io.IOException;
 import java.math.BigDecimal;
-import java.text.SimpleDateFormat;
 import java.util.List;
-import java.util.TimeZone;
 import java.util.stream.Collectors;
 
 public class RecordServiceRecordCursor implements RecordCursor
 {
-  private static final Logger log = Logger.get(RecordServiceSplitManager.class);
+  private static final Logger LOG = Logger.get(RecordServiceSplitManager.class);
   private final Records records;
   private Records.Record nextRecord;
   private List<Schema.TypeDesc> columnTypes;
@@ -58,6 +56,7 @@ public class RecordServiceRecordCursor implements RecordCursor
   @Override
   public long getTotalBytes()
   {
+    // TODO: support this
     throw new UnsupportedOperationException();
   }
 
@@ -67,13 +66,10 @@ public class RecordServiceRecordCursor implements RecordCursor
     try {
       return records.getStatus().stats.bytesRead;
     }
-    catch (IOException e) {
-      log.error("Failed to getCompletedBytes.", e);
+    catch (IOException | RecordServiceException e) {
+      throw new PrestoException(RecordServiceErrorCode.TASK_ERROR,
+          "Failed to getCompletedBytes", e);
     }
-    catch (RecordServiceException e) {
-      log.error("Failed to getCompletedBytes.", e);
-    }
-    throw new RuntimeException("Failed to getCompletedBytes");
   }
 
   @Override
@@ -82,13 +78,10 @@ public class RecordServiceRecordCursor implements RecordCursor
     try {
       return records.getStatus().stats.clientTimeMs;
     }
-    catch (IOException e) {
-      log.error("Failed to getReadTimeNanos.", e);
+    catch (IOException | RecordServiceException e) {
+      throw new PrestoException(RecordServiceErrorCode.TASK_ERROR,
+          "Failed to getReadTimeNanos.", e);
     }
-    catch (RecordServiceException e) {
-      log.error("Failed to getReadTimeNanos.", e);
-    }
-    throw new RuntimeException("Failed to getReadTimeNanos");
   }
 
   @Override
@@ -190,6 +183,7 @@ public class RecordServiceRecordCursor implements RecordCursor
   @Override
   public Object getObject(int field)
   {
+    // TODO: implement this
     throw new UnsupportedOperationException("getObject is not supported");
   }
 

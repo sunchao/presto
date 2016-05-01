@@ -61,8 +61,8 @@ public class RecordServiceUtil
       case DECIMAL:
         return DecimalType.createDecimalType(typeDesc.precision, typeDesc.scale);
       default:
-        throw new PrestoException(RecordServiceErrorCode.CATALOG_ERROR,
-            "Unsupported RecordService type " + typeDesc.typeId.name());
+        throw new PrestoException(RecordServiceErrorCode.TYPE_ERROR,
+            "Unsupported RecordService type: " + typeDesc.typeId.name());
     }
   }
 }
